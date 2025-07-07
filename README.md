@@ -1,117 +1,179 @@
-# 🚀 Mindly Starter Template
+# wizards-claw - Professional Development Template
 
-> **Transform any project with professional development workflows in minutes!**
+> **🚀 Created with [Mindly Starter Template](https://github.com/seanacres/mindly-starter-template)**  
+> Production-ready project with best practices, CI/CD, and professional workflows built-in.
 
-This starter template provides battle-tested development practices, workflows, and automation from production projects. Whether starting fresh or upgrading an existing project, get professional-grade infrastructure instantly.
+## 🎯 What You Get
 
-## ✨ What You Get
+This template provides everything needed for professional development:
 
-### 🏗️ **Professional Development Foundation**
-- **CRITICAL_CORE Principles** - Proven development rules and protocols
-- **GitHub Issues Workflow** - Complete issue-driven development with templates
-- **Cost-Optimized CI/CD** - Production-ready pipelines with built-in cost controls
-- **Quality Gates** - Pre-commit hooks, security scanning, and validation
-- **Smart Automation** - Scripts that save hours of manual work
+### ✅ **Production-Ready Infrastructure**
+- **CI/CD Pipelines** - Automated testing, building, and deployment
+- **Quality Gates** - Code standards, security scanning, performance monitoring
+- **Cost Optimization** - GitHub Actions cost controls and monitoring
 
-### 🚀 **One-Command Setup for Existing Projects**
+### ✅ **Development Excellence**
+- **CRITICAL_CORE Rules** - Universal development principles from proven workflows
+- **GitHub Issues Workflow** - Professional issue-first development with templates
+- **Automation Scripts** - Battle-tested development and cost optimization tools
+
+### ✅ **Security & Monitoring**
+- **Security Scanning** - Automated vulnerability detection
+- **Performance Monitoring** - Built-in performance tracking
+- **Error Recovery** - Comprehensive error handling protocols
+
+## 🚀 Quick Start
+
+### Option 1: Existing Project (Intelligent Setup)
 ```bash
-# Run from your project - intelligent analysis and safe integration
+# Run from your existing project - analyzes and integrates safely
 curl -sL https://raw.githubusercontent.com/seanacres/mindly-starter-template/main/scripts/intelligent-setup.sh | bash
-```
 
-### 🛡️ **Intelligent Integration**
-- Detects existing configurations (CI/CD, workflows, etc.)
-- Never overwrites without permission
-- Creates `.mindly` versions for manual review
-- Full backup and rollback capability
-- Detailed reports of all changes
-
-## 📖 Quick Start
-
-### For Existing Projects (Recommended)
-```bash
-# Intelligent setup analyzes and integrates safely
+# Or for more control:
 git clone --depth 1 https://github.com/seanacres/mindly-starter-template.git .mindly-setup && \
-.mindly-setup/scripts/intelligent-setup.sh && \
-rm -rf .mindly-setup
+.mindly-setup/scripts/intelligent-setup.sh && rm -rf .mindly-setup
 ```
+See [QUICK-START.md](https://github.com/seanacres/mindly-starter-template/blob/main/QUICK-START.md) for details.
 
-### For New Projects
+### Option 2: New Project (Traditional Setup)
 ```bash
-# Traditional setup for fresh projects
-git clone https://github.com/seanacres/mindly-starter-template.git my-project
-cd my-project
+# Clone and initialize new project
+git clone https://github.com/seanacres/mindly-starter-template.git wizards-claw
+cd wizards-claw
 ./scripts/setup-project.sh
 ```
 
-### For Non-Technical Users
-Use [Claudia](https://github.com/getAsterisk/claudia) GUI for visual project creation and one-button deployment.
+### Option 3: Claudia GUI (Non-Technical)
+1. Open [Claudia](https://github.com/getAsterisk/claudia)
+2. Click "Create New Project"
+3. Select your project type
+4. Deploy with one button click
 
-## 📂 What's Included
+## 📋 Project Structure
 
 ```
-├── .github/
-│   ├── workflows/        # Production-ready CI/CD pipelines
-│   └── ISSUE_TEMPLATE/   # Professional issue templates
-├── scripts/
-│   ├── intelligent-setup.sh       # Smart integration for existing projects
-│   ├── setup-project.sh           # New project wizard
-│   ├── github-actions-cost-baseline.sh  # Cost monitoring
-│   └── create-missing-labels.sh   # GitHub label setup
-├── rules/
-│   └── CRITICAL_CORE.mdc  # Universal development principles
-├── docs/
-│   └── SETUP-GUIDE.md     # Manual setup documentation
-├── templates/             # Project type templates
-└── claudia-integration/   # GUI workflow foundation
+wizards-claw/
+├── .github/workflows/          # CI/CD automation
+├── .github/                   # Issues templates & workflows
+├── src/                       # Your application code
+├── tests/                     # Test suites
+├── scripts/                   # Development automation
+├── rules/                     # Development standards
+└── docs/                      # Project documentation
 ```
 
-## 🎯 Key Features
+## 🛠️ Development Commands
 
-### Intelligent Setup
-- **Project Analysis** - Detects existing tools and configurations
-- **Conflict Prevention** - Safe merging with backup and rollback
-- **Guided Process** - Interactive setup with clear next steps
-- **Custom Reports** - Detailed documentation of changes
+```bash
+# Development
+npm run dev                    # Start development server
+npm run build                  # Build for production
+npm run test                   # Run test suite
 
-### Professional Workflows
-- **Issue-First Development** - All work starts with GitHub issues
-- **Branch Protection** - Enforce quality standards
-- **Cost Monitoring** - Track and optimize CI/CD spending
-- **Security Scanning** - Automated vulnerability detection
+# Quality & Automation
+./scripts/github-actions-cost-baseline.sh  # Monitor CI/CD costs
+./scripts/setup-pre-commit.sh              # Setup pre-commit hooks
+./scripts/validate-issue-labels.sh         # Validate issue hygiene
 
-### Developer Experience
-- **Pre-commit Hooks** - Catch issues before they reach CI/CD
-- **Command Discovery** - `./scripts/help.sh` shows all tools
-- **Quick Reference** - Built-in documentation and guides
-- **Automation Scripts** - Common tasks automated
+# Issue-First Development  
+gh issue list --state open --label "priority:high"  # Check high priority work
+gh issue create --title "feat: description" --body "Details" --label "feature"  # Create new issue
+gh issue edit <number> --add-assignee @me  # Assign yourself to issue
+```
 
-## 📊 Success Metrics
+## 🏗️ Architecture
 
-Projects using this template report:
-- **80% reduction** in setup time
-- **90% fewer** CI/CD failures
-- **50% lower** GitHub Actions costs
-- **Zero** security vulnerabilities in new code
+### Professional Development Foundation
+This template provides the **proven workflow and tooling** from a production project:
 
-## 🤝 Contributing
+**Core Infrastructure:**
+- **GitHub Issues First** - All work starts with proper issue creation and tracking
+- **CRITICAL_CORE Principles** - Battle-tested development rules and protocols
+- **Cost-Aware CI/CD** - GitHub Actions with built-in cost monitoring and optimization
+- **Security-First** - Automated vulnerability scanning and best practices
+- **Quality Gates** - Comprehensive testing, linting, and validation
 
-Contributions welcome! This template grows stronger with community input:
-- Report issues or suggest improvements
-- Share your workflow enhancements
-- Add new automation scripts
-- Improve documentation
+**Adaptable Base:**
+- Works with any web technology stack (React, Vue, Angular, vanilla JS, etc.)
+- Provides foundation scripts and workflows that enhance any project
+- Focuses on **development process excellence** rather than specific frameworks
 
-## 📄 License
+## 🔧 Configuration
 
-MIT License - Use freely in personal and commercial projects.
+### Environment Setup
+```bash
+# Copy environment template
+cp .env.example .env.local
 
-## 🙏 Acknowledgments
+# Configure your settings
+# - API keys
+# - Database connections
+# - Deployment targets
+```
 
-Built from real-world experience and community best practices. Special thanks to the developers who battle-tested these workflows in production.
+### CI/CD Configuration
+The template includes production-ready workflows:
+- **Quality Checks** - Linting, testing, security scanning
+- **Cost Controls** - GitHub Actions usage monitoring
+- **Deployment** - Automated deployment to your platform
+
+## 📊 Monitoring & Analytics
+
+### Built-in Dashboards
+- **GitHub Actions Costs** - Track and optimize CI/CD spending
+- **Performance Metrics** - Monitor application performance
+- **Task Velocity** - Development progress tracking
+
+### Alerts & Notifications
+- Cost threshold alerts
+- Security vulnerability notifications
+- Performance regression detection
+
+## 🤝 Development Workflow
+
+This project follows professional development standards:
+
+1. **Issue-First Development** - All work starts with GitHub issues
+2. **Quality Gates** - Comprehensive testing and validation
+3. **Cost Awareness** - Proactive CI/CD cost management
+4. **Security-First** - Built-in security scanning and best practices
+
+### Contributing
+1. Create issue for your work
+2. Create feature branch: `git checkout -b feature/issue-123-description`
+3. Follow CRITICAL_CORE development principles
+4. Submit PR with proper linking and testing
+
+## 📄 Documentation
+
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Detailed development instructions
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Production deployment steps
+- **[API Documentation](./docs/API.md)** - API reference and examples
+- **[CRITICAL_CORE Rules](./rules/CRITICAL_CORE.mdc)** - Development principles
+
+## 🎯 Performance Standards
+
+This template maintains professional quality standards:
+- **Zero Warnings** - Clean builds always
+- **Cost Optimization** - GitHub Actions costs <$50/month
+- **Security First** - No known vulnerabilities
+- **Performance** - Core Web Vitals optimized
+
+## 🚨 Support & Help
+
+### Quick Help
+- `./scripts/help.sh` - Show all available commands
+- `./docs/SETUP-GUIDE.md` - Manual setup steps (labels, permissions, etc.)
+- Follow CRITICAL_CORE workflow principles
+- Check [Issues](https://github.com/danny-volley/wizards-claw/issues) for known problems
+
+### Getting Unstuck
+1. Check the troubleshooting guide in `docs/TROUBLESHOOTING.md`
+2. Search existing issues for solutions
+3. Create new issue with detailed problem description
 
 ---
 
-**Ready to level up your development workflow?** Start with the [Quick Start Guide](QUICK-START.md) or dive into the [Complete Setup Guide](docs/SETUP-GUIDE.md).
+**Built with ❤️ using [Mindly Starter Template](https://github.com/seanacres/mindly-starter-template)**
 
-*Transform your project in minutes, not hours!* 🚀
+*This template provides a foundation for professional development. Customize it to match your specific needs while maintaining the quality standards and automation.*
