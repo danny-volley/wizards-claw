@@ -1,0 +1,134 @@
+---
+description: Mindly-specific design system learnings and AI asset generation patterns
+globs: **/*.swift, iOS/**/*
+alwaysApply: false
+---
+
+# MINDLY DESIGN SYSTEM LEARNINGS
+
+**Created**: June 30, 2025 - Comprehensive learnings from Mindly design evolution  
+**Updated**: January 1, 2025 - Focused on Mindly-specific patterns
+
+## 🎯 MINDLY DESIGN EVOLUTION
+
+### The Journey We Took
+1. **Sage Minimalist** → Initial therapeutic aesthetic
+2. **Southwest Geometric** → Cultural warmth injection
+3. **Enhanced Southwest** → Final terracotta-based theme
+4. **Character Evolution** → From complex to simple doodle
+
+### What We Learned
+- Users rejected pharmaceutical associations (pill shapes)
+- Simplicity beat complexity every time
+- Cultural themes resonated (Southwest patterns)
+- Character needed to be approachable, not technical
+
+## 🤖 MINDLY AI GENERATION PATTERNS
+
+### Successful Prompts That Worked
+
+**Character Generation (DALL-E 3):**
+```
+"Create a simple doodle character EXACTLY like this:
+- Simple organic oval/bean-shaped body
+- Two simple circular dot eyes in upper portion
+- Very minimal mouth - just subtle upward curve
+- Simple stick arms and legs (minimal lines)
+- Solid terracotta color (#E89F71)
+- White background
+- Flat 2D style, no shading or 3D effects
+
+Avoid: medical/pill shapes, realistic features, complex details"
+```
+
+### Failed Approaches
+- **Over-engineering**: AI adds complexity without guidance
+- **Medical associations**: Capsule shapes triggered negative reactions
+- **Realistic features**: Made character less approachable
+- **Complex patterns**: Overwhelmed simple character design
+
+## 🎨 MINDLY THEME IMPLEMENTATION
+
+### Current Theme Structure
+```swift
+// Mindly's 4 theme variants
+enum ThemeVariant: CaseIterable {
+    case mindlyDefault      // Original sage green
+    case enhancedSouthwest  // Terracotta primary
+    case darkMode          // Night-friendly
+    case highContrast      // Accessibility
+}
+
+// Voice-specific colors
+extension Theme.Colors {
+    var voiceRecording: Color   // Active recording state
+    var voiceProcessing: Color  // AI processing
+    var voiceError: Color       // Error state
+    var voiceSuccess: Color     // Success feedback
+}
+```
+
+### Southwest Pattern Integration
+- **Background patterns**: Geometric Southwest designs
+- **Card decorations**: Subtle pattern overlays
+- **Loading states**: Pattern-based animations
+- **Character remains simple**: Patterns in environment only
+
+## 📊 MINDLY-SPECIFIC METRICS
+
+### Design Success Indicators
+- **Emotional response time**: <2 seconds to positive reaction
+- **Character recognition**: Instant brand association
+- **Theme consistency**: Zero hardcoded colors in codebase
+- **Asset loading**: <100ms for all design assets
+
+### User Feedback Patterns
+- **"Looks like medicine"** → Immediate redesign needed
+- **"Too complex"** → Simplify aggressively
+- **"I like the warmth"** → Lock in terracotta palette
+- **"Feels approachable"** → Design success
+
+## 🔧 MINDLY ASSET MANAGEMENT
+
+### File Structure
+```
+generated-assets/
+├── characters/
+│   └── doodle_rounded/    # Approved character design
+├── patterns/
+│   └── southwest/         # Geometric patterns
+├── mockups/
+│   └── mindly_style_enhanced_southwest.png
+└── prompts/
+    └── successful_prompts.txt  # What worked
+```
+
+### Version Control
+- **Preserve approved designs**: Never overwrite winners
+- **Document decisions**: Why designs were chosen
+- **Track iterations**: Keep failed attempts for learning
+- **Prompt versioning**: Save exact prompts that worked
+
+## 🚨 MINDLY DESIGN RULES
+
+### Character Design LOCKED
+- **Approved**: `doodle_rounded` organic oval/bean shape
+- **Color**: Terracotta primary (#E89F71)
+- **Style**: Simple, approachable, non-medical
+- **NO CHANGES** without strong user feedback
+
+### Theme Compliance
+- **MANDATORY**: All UI uses Theme.* system
+- **NO EXCEPTIONS**: Zero hardcoded colors/fonts
+- **VALIDATION**: Run theme compliance script before commits
+- **PERFORMANCE**: Theme switches <0.6 seconds
+
+### AI Generation Guidelines
+- **Explicit constraints** prevent AI creativity overreach
+- **Test with users** before finalizing any design
+- **Lock winners** immediately in version control
+- **Document prompts** that produce good results
+
+---
+
+**Remember**: These are Mindly-specific learnings. For universal design principles, see rules/CRITICAL_CORE.mdc.

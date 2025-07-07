@@ -1,0 +1,729 @@
+---
+description: Universal development principles and critical protocols for any project - Workflow-Centric Version
+globs: **/*
+alwaysApply: true
+---
+
+# 🚨 CRITICAL CORE RULES - WORKFLOW-CENTRIC VERSION
+
+## 🚨 EMERGENCY PROTOCOLS - READ FIRST
+
+### **USER CORRECTION PROTOCOL**
+**When user corrects your approach:**
+1. **STOP** current work immediately (don't finish "just this part")
+2. **ACKNOWLEDGE** the correction explicitly
+3. **ASK** clarifying questions about the correct approach
+4. **REBUILD** from scratch with new understanding
+5. **VALIDATE** new direction before significant work
+
+### **CRITICAL ISSUE TYPES**
+- **BLOCKER**: Stop all other work, create hotfix branch immediately
+- **WORKFLOW-FAILURE**: CI/CD broken, all PRs blocked - route to Infrastructure Hub
+- **PERFORMANCE REGRESSION**: System degradation - high priority fix required
+- **HIGH PRIORITY**: Important but not blocking - work after blockers resolved
+
+---
+
+## 🚀 DEVELOPMENT WORKFLOW - START HERE
+
+**⚡ FOLLOW THIS EXACT SEQUENCE EVERY TIME:**
+
+### **Step 1: Find Critical Issue** [→ Priority Assessment](#priority-assessment)
+```bash
+gh issue list --state open --label "blocker"          # Check blockers first
+gh issue list --state open --label "workflow-failure" # Then CI/CD failures
+gh issue list --state open --label "performance" --label "regression" # Then performance
+gh issue list --state open --label "priority: high"   # Then high priority
+gh issue list --state open                            # Finally, regular work
+```
+
+### **Step 2: Assign & Prepare** [→ Assignment Protocol](#assignment-protocol)
+```bash
+gh issue edit <issue-number> --add-assignee @me      # Assign yourself
+gh issue view <issue-number>                         # Verify assignment
+gh issue view <issue-number> | grep "Depends on"     # Check dependencies
+```
+
+### **Step 3: Create Branch** [→ Branching Strategies](#branching-strategies)
+```bash
+git checkout main && git pull origin main            # Update main
+git checkout -b <type>/issue-<number>-<description> # Create branch
+
+# Branch types:
+# hotfix/    - For blockers and critical fixes
+# feature/   - For standard development
+# priority/  - For high priority work
+# perf/      - For performance fixes
+```
+
+### **Step 4: Implement Changes** [→ Implementation Guides](#implementation-guides)
+- Apply [Thinking Protocol](#thinking-protocol) before coding
+- Use [Ultrathinking](#ultrathinking-protocol) for complex changes
+- Follow [Technical Debt Cascade](#technical-debt-cascade) for refactoring
+- Track [Incremental Discoveries](#incremental-discovery)
+
+### **Step 5: Validate Quality** [→ Quality Validation](#quality-validation)
+```bash
+# Build validation - MANDATORY
+# Run appropriate commands for your language/framework
+# Examples:
+cd iOS/Mindly && ./quick_build_check.sh             # iOS
+pytest tests/ -v                                     # Python
+npm test                                             # JavaScript
+
+# ZERO WARNINGS standard - professional development
+```
+
+### **Step 6: Commit Changes** [→ Commit Standards](#commit-standards)
+```bash
+git commit -m 'type: description (#issue-number)'
+# Types: feat, fix, docs, style, refactor, test, chore
+```
+
+### **Step 7: Create Pull Request** [→ PR Protocol](#pr-protocol)
+```bash
+git push origin <branch-name>
+gh pr create --title "type: Description (#number)" \
+  --body "Fixes #<number>" --assignee @me && gh pr view --web
+```
+
+---
+
+## 💰 COST OPTIMIZATION PROTOCOLS
+
+### Pre-emptive Cost Prevention
+**MANDATORY BEFORE ANY CI/CD CHANGES:**
+1. **VALIDATE** locally with pre-commit hooks first
+2. **ESTIMATE** workflow minute usage: `gh workflow list --json billable`
+3. **REVIEW** trigger patterns - prefer manual over automatic
+4. **MONITOR** with weekly baseline: `./scripts/github-actions-cost-baseline.sh`
+
+### Emergency Cost Response
+**WHEN BILLING LIMITS HIT:**
+1. **IMMEDIATE**: Run `./scripts/disable-workflow-triggers.sh`
+2. **ASSESS**: Generate cost report with monitoring scripts
+3. **COMMUNICATE**: Create emergency issue with `crisis-response` label
+4. **PREVENT**: Implement pre-commit hooks for all developers
+
+### Cost-Aware Development
+- **NEVER** add automatic triggers without cost analysis
+- **ALWAYS** validate locally before pushing (saves 294 failed runs/month)
+- **PREFER** consolidated workflows over multiple small ones
+- **MEASURE** success by reduced CI minutes, not just features
+
+## 📝 ISSUE-FIRST DEVELOPMENT MANDATE
+
+### Documentation Philosophy
+**🚨 GOLDEN RULE: Issues are living documentation**
+- ❌ NEVER create standalone .md files for planning/tracking
+- ❌ NEVER use documents as task lists
+- ✅ ALWAYS create GitHub issues for trackable work
+- ✅ ALWAYS update issues with decisions and outcomes
+
+### Why Issues Over Documents
+1. **Visibility**: Team sees work in progress
+2. **Automation**: Workflows can act on issues
+3. **Metrics**: Track velocity and patterns
+4. **Integration**: Links with PRs, commits, projects
+5. **Lifecycle**: Clear open/closed states
+
+### Document Exceptions
+Only create .md files for:
+- API documentation (generated from code)
+- Setup guides (rarely changing)
+- Architecture decisions (after implementation)
+
+## 🏷️ LABEL MANAGEMENT PROTOCOL
+
+### Label Hygiene
+**BEFORE CREATING ANY ISSUE:**
+```bash
+# Ensure labels exist
+./scripts/create-missing-labels.sh
+
+# Use semantic labels
+gh issue create --label "type" --label "priority" --label "component"
+```
+
+### Label Categories (MANDATORY)
+1. **Type**: bug, feature, enhancement, documentation
+2. **Priority**: blocker, priority:high, priority:medium, priority:low
+3. **Component**: backend, frontend, infrastructure, tooling
+4. **Status**: ready, in-progress, blocked, needs-review
+5. **Special**: crisis-response, cost-optimization, workflow-failure
+
+## 🚨 COMMON FAILURES & SOLUTIONS
+
+### Pre-commit Hook Failures
+**Problem**: Hooks not running on commit
+**Solution**: Check file paths - hooks only run on `src/`, `iOS/`, `scripts/`, `tests/`
+
+### Branch Name Validation
+**Problem**: Branch rejected by validation
+**Solution**: Use allowed prefixes: feat, fix, docs, refactor, test, chore, build, ci
+
+### Label Not Found
+**Problem**: Issue creation fails with "label not found"
+**Solution**: Run `./scripts/create-missing-labels.sh` first
+
+### Workflow Billing Failures
+**Problem**: "The job was not started because recent account payments have failed"
+**Solution**: Run emergency protocol - disable all automatic triggers
+
+## 🧠 CORE DEVELOPMENT PRINCIPLES
+
+Quick access to essential protocols that improve development quality:
+
+### **[Thinking Protocol](#thinking-protocol)** - Analysis before action
+- What is the specific goal?
+- What are potential failure points?
+- What is the fallback strategy?
+- How can this be done in minimum steps?
+
+### **[Interruption Protocol](#interruption-protocol)** - Handle user corrections
+- STOP current work immediately
+- ACKNOWLEDGE the correction
+- ASK clarifying questions
+- REBUILD from scratch
+- Document pattern for improvement
+
+### **[Ultrathinking Protocol](#ultrathinking-protocol)** - Complex changes
+- SCOPE EXPLOSION: What could this touch?
+- CASCADE MAPPING: What breaks if this changes?
+- HIDDEN DEPENDENCIES: What implicit connections exist?
+- FUTURE CONFLICTS: What problems will this create?
+- AUTOMATION OPPORTUNITIES: What can we prevent?
+
+### **[Technical Debt Cascade](#technical-debt-cascade)** - Refactoring safely
+- MAP all potential touchpoints
+- SEARCH for string literals, not just imports
+- CHECK CI/CD workflows for hardcoded paths
+- SCAN configuration files
+- VERIFY database defaults and constants
+
+### **[Architecture Fragmentation](#architecture-fragmentation)** - Prevent parallel implementations
+- IDENTIFY active main view path
+- VERIFY work targets the view users actually see
+- DETECT parallel view architectures
+- VALIDATE visual changes in actual user flow
+
+### **[API Design Principles](#api-design-principles)** - Universal patterns
+- The Autocomplete Test: Understandable from IDE alone
+- The Context Principle: Names indicate WHEN to use
+- The Newcomer Standard: Design for zero prior knowledge
+- Group by Intent, Not Type
+
+### **[Continuous Improvement](#continuous-improvement)** - System evolution
+- ALWAYS scan for improvement opportunities
+- PROACTIVELY suggest rule updates
+- IMMEDIATELY flag enhancement needs
+- NEVER accept tool limitations - FIX THE TOOL
+
+---
+
+## ⚡ COMMAND QUICK REFERENCE
+
+### **Issue Management**
+```bash
+# Priority check
+gh issue list --state open --label "blocker"
+gh issue list --state open --label "workflow-failure"
+gh issue list --state open --label "priority: high"
+
+# Assignment
+gh issue edit <number> --add-assignee @me
+gh issue view <number>
+
+# Dependencies
+gh issue view <number> | grep "Depends on"
+gh issue view <dependency-number> --json state
+```
+
+### **Git Workflow**
+```bash
+# Branch creation
+git checkout main && git pull origin main
+git checkout -b feature/issue-<number>-<description>
+git checkout -b hotfix/issue-<number>-<description>
+git checkout -b priority/issue-<number>-<description>
+
+# Commits
+git commit -m 'feat: new feature (#123)'
+git commit -m 'fix: bug fix (#124)'
+git commit -m 'refactor: code restructuring (#126)'
+```
+
+### **Pull Request Creation**
+```bash
+# Standard PR
+gh pr create --title "type: Description (#number)" \
+  --body "Fixes #<number>" --assignee @me && gh pr view --web
+
+# Hotfix PR
+gh pr create --title "HOTFIX: Description (#number)" \
+  --body "## Critical Fix
+Fixes #<number>
+**Impact**: System was broken/down
+**Resolution**: Minimal fix applied
+**Testing**: Verified functionality restored" \
+  --assignee @me && gh pr view --web
+
+# Draft PR
+gh pr create --draft --title "type: Description (#number)" \
+  --body "WIP - Related to #<number>" --assignee @me
+```
+
+### **CI/CD Management**
+```bash
+# Check CI/CD status
+gh run list --limit 5
+gh run view <run-id>
+
+# Route failures
+gh issue comment <number> --body "Routing to Infrastructure Hub"
+```
+
+---
+
+## 📋 DETAILED REFERENCE SECTIONS
+
+### Priority Assessment
+
+**🚨 CRITICAL ISSUE TRIAGE:**
+
+1. **BLOCKER ISSUES**
+   - System is down or broken
+   - Development is completely blocked
+   - Production is affected
+   - **Response**: Immediate hotfix workflow
+
+2. **WORKFLOW FAILURES**
+   - CI/CD pipelines broken
+   - All PRs blocked from merging
+   - GitHub Actions failing systematically
+   - **Response**: Route to Infrastructure Maintenance Hub
+
+3. **PERFORMANCE REGRESSIONS**
+   - System degradation detected
+   - Response times increased
+   - Resource usage spiked
+   - **Response**: High priority performance fix
+
+4. **HIGH PRIORITY**
+   - Important features or fixes
+   - Not blocking other work
+   - User-facing improvements
+   - **Response**: Priority branch after blockers
+
+### Assignment Protocol
+
+**📋 BEFORE STARTING ANY WORK:**
+
+1. **CHECK** existing issues for duplicates
+2. **VERIFY** no one else is assigned to related issues
+3. **CONFIRM** dependencies are complete (check "blocks" labels)
+4. **ASSIGN** yourself BEFORE creating any branches
+
+**🔒 ISSUE LOCKING PROTOCOL:**
+- Issues automatically lock when assigned
+- "in-progress" label added when PR created
+- Other developers blocked from same issue
+- Lock released only when PR merged/closed
+
+### Branching Strategies
+
+**🌿 BRANCH NAMING CONVENTIONS:**
+
+| Issue Type | Branch Prefix | Example |
+|------------|---------------|---------|
+| Blocker/Critical | `hotfix/` | `hotfix/issue-176-cicd-failure` |
+| High Priority | `priority/` | `priority/issue-173-performance` |
+| Feature Development | `feature/` | `feature/issue-49-pattern-library` |
+| Bug Fix | `fix/` | `fix/issue-166-warning-cleanup` |
+| Performance | `perf/` | `perf/issue-173-regression` |
+| Maintenance | `maintenance/` | `maintenance/issue-92-infrastructure` |
+
+### Implementation Guides
+
+#### Thinking Protocol
+
+**💭 REQUIRED ANALYSIS BEFORE ACTION:**
+- What is the specific goal?
+- What are potential failure points?
+- What is the fallback strategy?
+- How can this be done in minimum steps?
+
+**⚡ DECISION MAKING:**
+- Choose simplest approach that works
+- Prioritize incremental progress over perfection
+- Stop and reassess after any failure
+- Always have Plan B ready
+
+#### Ultrathinking Protocol
+
+**🎯 WHEN TO ULTRATHINK:**
+- Major refactoring or architectural changes
+- Creating parent issues or multi-phase work
+- Solving problems that touch multiple systems
+- When explicitly requested by user
+
+**📋 ULTRATHINKING FRAMEWORK:**
+1. **SCOPE EXPLOSION**: What could this touch that isn't obvious?
+2. **CASCADE MAPPING**: What breaks if this changes?
+3. **HIDDEN DEPENDENCIES**: What implicit connections exist?
+4. **FUTURE CONFLICTS**: What problems will this create later?
+5. **AUTOMATION OPPORTUNITIES**: What can we prevent systematically?
+
+#### Technical Debt Cascade
+
+**🚨 REALITY: Simple Changes Are Never Simple**
+
+**MANDATORY CASCADE ANALYSIS:**
+Before ANY refactoring/renaming:
+1. **MAP** all potential touchpoints
+2. **SEARCH** for string literals, not just imports
+3. **CHECK** CI/CD workflows for hardcoded paths
+4. **SCAN** configuration files
+5. **VERIFY** database defaults and constants
+
+**DISCOVERY PATTERN:**
+```bash
+# Start broad, narrow down
+rg -i "old_name" --type-add 'config:*.{yml,yaml,json,ini,toml}'
+# Check different casings
+rg -i "OldName|old_name|OLD_NAME"
+# Check partial matches
+rg "old.*name|name.*old"
+```
+
+#### Incremental Discovery
+
+**🚨 PRINCIPLE: Plan for Discovery, Not Perfection**
+
+**DISCOVERY-FRIENDLY DEVELOPMENT:**
+1. **START** with what you know
+2. **DOCUMENT** what you discover
+3. **ADAPT** plan based on findings
+4. **COMMUNICATE** discoveries immediately
+5. **UPDATE** rules with new patterns
+
+**DISCOVERY TRACKING:**
+```bash
+# In PR comments, track discoveries
+## 🔍 Unexpected Discoveries
+- Found X also needed updating
+- Discovered Y was dependent on X
+- CI/CD revealed Z configuration issue
+```
+
+### Quality Validation
+
+**🏗️ BUILD VALIDATION PRINCIPLES:**
+
+**⚡ UNIVERSAL BUILD REQUIREMENTS:**
+- **ALWAYS** validate builds after code changes
+- **NEVER** mark tasks complete without successful build
+- **IMMEDIATELY** fix build failures before proceeding
+- **VERIFY** functionality before considering work done
+
+**📊 BUILD SUCCESS CRITERIA:**
+- Compilation without errors
+- All tests passing
+- **ZERO WARNINGS** (professional development standard)
+- Performance metrics maintained
+
+**🚨 WARNING CLEANUP PROTOCOL:**
+- **RESEARCH BEFORE FIXING** - Deep analysis prevents cascading failures
+- **ONE FIX PER VERIFICATION** - Test compilation after each change
+- **ARCHITECTURAL OVER QUICK FIXES** - Root cause solutions, not warning suppression
+- **ZERO WARNINGS STANDARD** - Professional development maintains clean builds
+
+### Commit Standards
+
+**COMMIT TYPES:**
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation only
+- `style:` Formatting, no code change
+- `refactor:` Code restructuring
+- `test:` Test additions/changes
+- `chore:` Maintenance tasks
+
+**COMMIT MESSAGE FORMAT:**
+```bash
+# Standard format
+git commit -m 'type: brief description (#issue-number)'
+
+# With body (for complex changes)
+git commit -m 'type: brief description (#issue-number)' -m '
+- Detailed change 1
+- Detailed change 2
+- Testing approach
+'
+```
+
+### PR Protocol
+
+**✅ PR REQUIREMENTS - ALL MUST PASS:**
+1. **LINK** issue with "Fixes #number" in PR body
+2. **BRANCH** naming: `type/issue-{number}-{description}`
+3. **TITLE** format: `type: Brief description (#number)`
+4. **CHECKS** all CI/CD must pass before review request
+5. **DOCS** update if functionality changed
+6. **TESTS** for new code (where applicable)
+
+**🧹 MANDATORY ISSUE HYGIENE ON EVERY MERGE:**
+```bash
+# STEP 1: Add resolution summary to issue (for documentation)
+gh issue comment <issue-number> --body "## ✅ RESOLUTION SUMMARY
+
+**Status**: COMPLETED via PR #<pr-number>
+**What was delivered**: <one-line description>
+**Files changed**: <list key files>
+**Testing**: <how to verify it works>
+
+This issue is CLOSED. For similar problems, create new issues."
+
+# STEP 2: Merge PR ensuring issue auto-closes
+# CRITICAL: Include "Fixes #issue-number" in merge commit for auto-close
+# Note: GitHub only auto-closes from PR/commit messages, NOT issue comments
+gh pr merge <pr-number> --squash --delete-branch \
+  --body "$(gh pr view <pr-number> --json body -q .body)
+
+Fixes #<issue-number>"
+
+# STEP 3: Verify issue auto-closed (should show "CLOSED")
+gh issue view <issue-number> --json state -q .state
+
+# STEP 4: Clean up local branches immediately
+git checkout main && git pull
+git cleanup              # Remove branches deleted on remote
+git branch-status        # Verify only OPEN issue branches remain
+```
+
+**🌿 BRANCH HYGIENE PRINCIPLES:**
+- **ONE BRANCH** per issue, no duplicates
+- **AUTO-DELETE** on PR merge (--delete-branch flag)
+- **IMMEDIATE CLEANUP** after every merge
+- **ZERO TOLERANCE** for branches with closed issues
+- **WEEKLY AUDIT** using `git cleanup-closed`
+
+**📊 BRANCH HEALTH METRICS:**
+- Local branches ≤ 2x open issues
+- Zero branches for closed issues
+- Zero branches older than 30 days
+- 100% PRs use --delete-branch flag
+
+---
+
+## 🔧 ADDITIONAL PROTOCOLS
+
+### File Operations
+
+**🚨 FILE EDIT FAILURES - MOST COMMON ISSUE:**
+- **NEVER** attempt large file edits (>500 lines) in single operation
+- **ALWAYS** use incremental approach for large files
+- **IF** edit_file shows "no changes made" → STOP and use alternative approach
+
+**✅ CORRECT FILE CREATION PATTERN:**
+```bash
+# 1. Create file first
+touch filename.ext
+
+# 2. Then edit in small chunks
+# Use edit tools with <200 lines max per edit
+```
+
+### Tool Verification Protocol
+
+**🚨 MANDATORY: Always verify tool state before making effectiveness claims**
+
+**✅ CORRECT EVALUATION WORKFLOW:**
+1. **LOCATE** tool/script in question
+2. **EXAMINE** current implementation and features  
+3. **TEST** tool functionality on current codebase
+4. **ANALYZE** results and effectiveness
+5. **DECIDE** based on verified data
+
+### Terminal Safety Protocols
+
+**⚡ CHARACTER ESCAPING (MANDATORY):**
+- **NEVER** use unescaped newlines in terminal commands
+- **ALWAYS** use single quotes for literal strings
+- **ALWAYS** escape special shell characters: `$`, backticks, `\`, `|`, `&`, `;`
+
+**🛡️ COMMIT MESSAGE SAFETY:**
+- **ALWAYS** use single quotes for commit messages
+- **MAXIMUM** 72 characters for commit message title
+- **NO** embedded newlines, bullets, or complex formatting
+
+---
+
+## 🎯 CORE PRINCIPLES SUMMARY
+
+**🎯 CORE PRINCIPLE: PROGRESS OVER PERFECTION**
+**⚡ EFFICIENCY OVER ELEGANCE**  
+**🔄 ADAPTATION OVER REPETITION**
+**🔧 FIX THE TOOL, DON'T DOCUMENT LIMITATIONS**
+**🚫 NO CHECKBOX THEATER - AUTOMATE OR ELIMINATE**
+**🔀 NO MERGE CONFLICTS - ALWAYS START FROM LATEST MAIN**
+
+### Universal Rules
+1. **Single-Pass Implementation**: Get it right the first time
+2. **Build Validation**: MANDATORY after every change  
+3. **No Partial Commits**: Only commit fully working code
+4. **Tool Over Documentation**: Fix tools rather than document workarounds
+5. **Efficiency First**: Minimize tool calls and token usage
+
+### Success Metrics
+- **Zero** merge conflicts between developers
+- **100%** of PRs have linked issues
+- **95%** of PRs pass checks first time
+- **<2 hours** average PR review time
+- **Zero** duplicate work incidents
+
+## 🔍 Documentation Verification Protocol
+
+### MANDATORY: Always Work with Latest Documentation
+
+**🚨 CRITICAL PRINCIPLE: Never trust cached knowledge - always verify against current documentation**
+
+**The Documentation Decay Problem:**
+- APIs change without notice
+- Features get deprecated silently
+- Behavior assumptions become outdated
+- Yesterday's best practice is today's anti-pattern
+
+### Pre-Development Verification
+
+**BEFORE using ANY external API or service:**
+
+1. **FETCH** current documentation using MCP servers
+2. **CHECK** the documentation's last updated date
+3. **VERIFY** your assumptions against current behavior
+4. **REVIEW** recent changelogs for breaking changes
+5. **DOCUMENT** verification timestamp in your work
+
+### MCP-Based Verification Commands
+
+**Generic Pattern for ANY Service:**
+```bash
+# Pattern: @<mcp-server> <command> <documentation-url>
+
+# Examples:
+@fetch get https://docs.github.com/en/rest/issues
+@fetch get https://platform.openai.com/docs/api-reference
+@fetch get https://stripe.com/docs/api
+@fetch get https://docs.aws.amazon.com/lambda/latest/api/
+
+# Check service status
+@fetch get https://status.github.com/api/v2/status.json
+@fetch get https://status.openai.com/api/v2/status.json
+
+# Get recent changes
+@fetch get https://github.blog/changelog/
+@fetch get https://platform.openai.com/docs/changelog
+```
+
+### Verification Tracking
+
+**In Every Issue/PR Description:**
+```yaml
+## API Documentation Verified
+- GitHub Issues API: 2025-01-06 [@github docs/issues] ✓
+- OpenAI API v2: 2025-01-06 [@fetch platform.openai.com] ✓
+- Stripe Webhooks: 2025-01-06 [@fetch stripe.com/docs] ✓
+- AWS Lambda: 2025-01-06 [@fetch docs.aws.amazon.com] ✓
+```
+
+### Common Verification Scenarios
+
+**1. Before API Integration:**
+```bash
+# Don't assume - verify current endpoints
+@fetch get https://api.example.com/v2/docs
+@fetch get https://api.example.com/changelog
+
+# Check deprecation notices
+@fetch get https://api.example.com/deprecations
+```
+
+**2. When Debugging Failures:**
+```bash
+# First check if API changed
+@fetch get https://docs.service.com/api/errors
+@fetch get https://status.service.com/incidents
+
+# Verify current rate limits
+@fetch get https://docs.service.com/rate-limiting
+```
+
+**3. Before Major Refactoring:**
+```bash
+# Ensure patterns still recommended
+@fetch get https://docs.framework.com/best-practices
+@fetch get https://docs.framework.com/migration-guide
+```
+
+### Anti-Patterns to Avoid
+
+**❌ NEVER:**
+- Assume API behavior from memory
+- Trust documentation older than 30 days
+- Skip changelog review for critical services
+- Use cached examples without verification
+- Implement based on old Stack Overflow answers
+
+**✅ ALWAYS:**
+- Fetch fresh documentation before coding
+- Check service status before debugging
+- Review breaking changes in changelogs
+- Verify rate limits and quotas
+- Document your verification timestamps
+
+### Service-Specific MCP Servers
+
+**Configure additional MCP servers as needed:**
+```json
+{
+  "mcpServers": {
+    "github": { /* GitHub API real-time access */ },
+    "fetch": { /* Generic web fetching */ },
+    "aws": { /* AWS documentation */ },
+    "gcp": { /* Google Cloud docs */ },
+    "stripe": { /* Payment API docs */ }
+  }
+}
+```
+
+### Verification Automation
+
+**Pre-commit Hook for Documentation Freshness:**
+```yaml
+- repo: local
+  hooks:
+    - id: doc-verification
+      name: Check documentation verification
+      entry: |
+        echo "Reminder: Have you verified external API docs?"
+        echo "Use: @fetch get <documentation-url>"
+      language: system
+      files: \.(py|js|ts|swift)$
+```
+
+### Success Metrics
+
+- **Zero** assumption-based API failures
+- **100%** of external integrations have verification timestamps
+- **<24 hours** maximum documentation age for active development
+- **Weekly** changelog reviews for critical dependencies
+
+### The Meta-Rule
+
+**"The only constant is change. Verify everything, assume nothing."**
+
+When in doubt: `@fetch get <docs-url>` before you code.
+
+---
+
+*End of restructured document*

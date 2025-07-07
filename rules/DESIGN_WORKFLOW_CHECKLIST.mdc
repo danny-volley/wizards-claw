@@ -1,0 +1,143 @@
+# DESIGN WORKFLOW CHECKLIST
+**Quick Reference**: Essential steps for design system development  
+**Companion to**: [DESIGN_SYSTEM_BEST_PRACTICES.mdc](mdc:rules/DESIGN_SYSTEM_BEST_PRACTICES.mdc)
+
+## 🚀 NEW PROJECT SETUP (Week 1)
+
+### Foundation Setup
+- [ ] **Define Design Principles** (therapeutic, accessible, regional, etc.)
+- [ ] **Set Up Theme Architecture** (semantic colors, multiple variants)
+- [ ] **Create AI Generation Pipeline** (scripts, prompts, constraints)
+- [ ] **Establish Asset Management** (file organization, git preservation)
+
+### Character/Brand Development
+- [ ] **Generate 3-5 Character Options** (different shapes, styles)
+- [ ] **Create Explicit Constraints** ("Avoid: medical shapes, complex features")
+- [ ] **Get User Gut Reactions** (emotional responses, not feature feedback)
+- [ ] **Document User Rejections** ("horrifying", "medical", "complicated")
+
+## 🎯 DIRECTION SETTING (Week 2)
+
+### User Feedback Integration
+- [ ] **User Picks Winning Direction** (lock it in immediately)
+- [ ] **Preserve Approved Assets** (git, .gitignore, backup)
+- [ ] **Create Comprehensive Mockups** (2-3 style variations)
+- [ ] **User Approves Specific Mockup** (reference for implementation)
+
+### Documentation & Planning
+- [ ] **Update Design System Rules** (reflect approved direction)
+- [ ] **Create Implementation Issues** (GitHub, parallel development)
+- [ ] **Define Success Criteria** (visual fidelity, performance targets)
+- [ ] **Establish Asset Workflow** (generation → approval → preservation)
+
+## 🏗️ IMPLEMENTATION (Week 3+)
+
+### Theme System Development
+- [ ] **Build Semantic Color System** (primary, secondary, surface, text)
+- [ ] **Create Multiple Theme Variants** (default, enhanced, dark, high-contrast)
+- [ ] **Test Theme Switching** (<0.6s transition, smooth animations)
+- [ ] **Validate Accessibility** (contrast ratios, dynamic type)
+
+### UI Component Conversion
+- [ ] **Convert Components Systematically** (one feature area at a time)
+- [ ] **Use Theme-Aware Patterns** (Theme.colors.primary vs hardcoded)
+- [ ] **Test All States** (default, loading, error, empty, pressed)
+- [ ] **Validate Against Mockup** (95%+ visual fidelity)
+
+### Asset Integration
+- [ ] **Generate Supporting Assets** (patterns, backgrounds, illustrations)
+- [ ] **Create iOS Asset Catalogs** (@1x, @2x, @3x variants)
+- [ ] **Test Time-Based Features** (character color changes, etc.)
+- [ ] **Performance Testing** (60fps maintenance, memory usage)
+
+## ✅ QUALITY GATES
+
+### User Validation
+- [ ] **Emotional Response Check** ("I love this" vs "this feels wrong")
+- [ ] **Functionality Verification** (all features work as expected)
+- [ ] **Visual Consistency** (matches approved mockup across screens)
+- [ ] **No Regressions** (existing features unaffected)
+
+### Technical Validation  
+- [ ] **Build Passes** (<30 seconds, no warnings)
+- [ ] **Theme Compliance** (all UI uses Theme.* system)
+- [ ] **Performance Targets** (60fps, <600ms load times)
+- [ ] **Accessibility Standards** (VoiceOver, Dynamic Type, High Contrast)
+
+### Asset Management
+- [ ] **Approved Designs Preserved** (never lose working assets)
+- [ ] **Generation Scripts Work** (reproducible asset creation)
+- [ ] **Documentation Current** (design decisions, why choices made)
+- [ ] **GitHub Issues Updated** (progress, blockers, completions)
+
+## 🚨 RED FLAGS - STOP IMMEDIATELY
+
+### User Feedback Red Flags
+- **"That's horrifying"** → Complete redesign required
+- **"Looks like medicine"** → Wrong shape/color associations
+- **"Too complicated"** → Simplify drastically
+- **"I don't like it"** → Don't add features, address root emotional issue
+
+### Technical Red Flags
+- **Build failures** → Fix before any other work
+- **Performance drops** → 60fps is non-negotiable
+- **Accessibility regressions** → Therapeutic apps must be inclusive
+- **Theme system breaks** → Architecture issue, not styling problem
+
+### Process Red Flags
+- **"Making it better"** → Don't improve approved designs without user need
+- **Lost approved assets** → Asset preservation failure
+- **Hardcoded colors/values** → Theme system not being used
+- **Multiple simultaneous design directions** → Decision paralysis
+
+## 🎯 SUCCESS CRITERIA
+
+### User Experience
+- ✅ **Emotional Connection**: User expresses positive feeling about design
+- ✅ **Intuitive Navigation**: No confusion about how to use features
+- ✅ **Consistent Aesthetic**: Cohesive visual experience across all screens
+- ✅ **Accessibility**: Works for users with disabilities
+
+### Development Experience
+- ✅ **Theme Flexibility**: New colors can be added in <5 minutes
+- ✅ **Component Reusability**: UI elements work across different contexts  
+- ✅ **Performance**: 60fps on target devices, smooth animations
+- ✅ **Maintainability**: New developers can understand and extend system
+
+### Business Goals
+- ✅ **Brand Differentiation**: Visually distinctive from competitors
+- ✅ **Therapeutic Feel**: Supports mental health/wellness goals
+- ✅ **Regional Authenticity**: Genuine connection to intended aesthetic
+- ✅ **Scalability**: System supports app growth and new features
+
+## 📋 COMMON SHORTCUTS THAT CAUSE PROBLEMS
+
+### ❌ Skipping User Feedback
+- **Problem**: Designer assumptions don't match user preferences
+- **Solution**: Get emotional reactions early and often
+
+### ❌ Improving Approved Designs
+- **Problem**: "Better" designs often lose what made originals work
+- **Solution**: Lock in winners, resist improvement urge
+
+### ❌ Hardcoded Visual Values
+- **Problem**: Visual direction changes require massive code rewrites
+- **Solution**: Semantic theme systems from day one
+
+### ❌ Complex AI Prompts
+- **Problem**: AI adds unwanted complexity beyond requirements
+- **Solution**: Explicit constraints and "avoid" statements
+
+### ❌ Poor Asset Management
+- **Problem**: Losing approved designs during iteration
+- **Solution**: Immediate preservation, clear file organization
+
+---
+
+## 🎯 REMEMBER THE CORE INSIGHT
+
+**Simple Character + Rich Environment = Award-Winning Design**
+
+**Users don't want more features, they want more confidence. Simple, consistent, emotionally safe designs build confidence. Complex, clever designs create anxiety.**
+
+**Build for confidence, not cleverness.**

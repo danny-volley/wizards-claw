@@ -1,0 +1,516 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Complete iOS development guide for Swift 6/SwiftUI with voice interface, theme compliance, concurrency patterns, and build validation protocols
+globs: **/*.swift, iOS/**/*
+alwaysApply: true
+---
+
+# iOS Complete Development Guide
+
+**🚨 MANDATORY READING ORDER:**
+1. **FIRST**: Read [CRITICAL_CORE.mdc](mdc:rules/CRITICAL_CORE.mdc) - Never edit this file
+2. **SECOND**: Reference [README.md](mdc:README.md) - Comprehensive project documentation
+3. **THEN**: Apply complete iOS development patterns
+
+## **⚡ CORE DEVELOPMENT PRINCIPLES**
+
+**Architecture:** Clean Architecture + Feature Modules (MVSU Pattern)
+**Platform:** iOS 16+, Swift 6, SwiftUI-first with voice interface
+**Theme System:** Dynamic theming with 4 variants via comprehensive Theme.* system
+**Voice-First:** Speech recognition, text-to-speech, audio session management
+
+## **🚀 SUB-30 SECOND BUILD VALIDATION**
+
+**🚨 MANDATORY: Validate builds after ALL code changes before marking tasks complete**
+
+**✅ Quick Syntax Check (2-5 seconds):**
+```bash
+xcodebuild -project Mindly.xcodeproj -target Mindly -configuration Debug -sdk iphonesimulator -arch x86_64 ONLY_ACTIVE_ARCH=YES -quiet build | grep -E "(error|FAILED|Build succeeded)"
+```
+
+**✅ Incremental Build (10-20 seconds):**
+```bash
+xcodebuild -project Mindly.xcodeproj -configuration Debug -sdk iphonesimulator ONLY_ACTIVE_ARCH=YES -quiet build 2>&1 | grep -E "(error|Build succeeded|FAILED)" | tail -3
+```
+
+**Build Protocol:**
+- **NEVER** mark tasks complete without successful compilation
+- **FIX** all build errors immediately when detected
+- **USE** quick validation during development iteration
+- **COMMIT** only working states
+
+## **🎨 THEME SYSTEM COMPLIANCE - CRITICAL MANDATE**
+
+**🚨 ALL UI components MUST use Theme.* system - NO exceptions**
+
+**✅ Required Theme Usage:**
+```swift
+// ✅ ALWAYS: Theme colors, animations, spacing, typography
+Text("Hello Mindly")
+    .foregroundColor(Theme.colors.primaryText)
+    .bodyPrimary()  // Typography function, not .font()
+    .padding(Theme.spacing.md)
+    .background(Theme.colors.surface)
+    .animation(Theme.animations.bouncy, value: isPressed)
+
+// ✅ ALWAYS: @MainActor for theme-accessing views/classes
+@MainActor
+struct ThemeCompliantView: View {
+    var body: some View {
+        Button("Action") { }
+            .foregroundColor(Theme.colors.primary)
+            .animation(Theme.animations.smooth, value: state)
+    }
+}
+```
+
+**❌ PROHIBITED Patterns:**
+```swift
+// DON'T: Hardcoded colors, generic animations, direct fonts, magic numbers
+.foregroundColor(.blue)              // → Theme.colors.primary
+.background(Color.red)               // → Theme.colors.error
+withAnimation(.spring()) { }         // → Theme.animations.bouncy
+.font(.title)                        // → .titlePrimary()
+.font(.bodyPrimary)                  // WRONG! Use .bodyPrimary()
+.padding(16)                         // → Theme.spacing.md
+.transition(.slide)                  // → .transition(.zoomFade)
+```
+
+**Feature-Specific Theme Properties:**
+```swift
+// ✅ Voice interface colors
+.foregroundColor(Theme.colors.voiceRecording)   // Recording state
+.foregroundColor(Theme.colors.voiceProcessing)  // AI processing
+.foregroundColor(Theme.colors.voiceError)       // Error state
+.foregroundColor(Theme.colors.voiceSuccess)     // Success state
+
+// ✅ Interactive state colors
+.foregroundColor(isPressed ? Theme.colors.primaryPressed : Theme.colors.primary)
+.background(Theme.colors.surface.opacity(Theme.opacity.overlay))
+```
+
+**Theme Compliance Validation:**
+```bash
+# Primary compliance check (30 seconds, 99% accurate)
+python3 ../../scripts/theme-compliance/detect_violations.py .
+
+# Combined build + compliance check
+./quick_build_check.sh  # Includes theme compliance
+```
+
+## **⚙️ SWIFT 6 CONCURRENCY & MAINACTOR PATTERNS**
+
+**🚨 CRITICAL: Structured concurrency only - NO DispatchQueue anti-patterns**
+
+**✅ MainActor Usage:**
+```swift
+// ✅ DO: Global actor for theme/UI-accessing classes
+@MainActor
+class ThemeManager: ObservableObject {
+    @Published var currentTheme: Theme = .default
+}
+
+// ✅ DO: MainActor views for UI state management
+@MainActor
+struct ContentView: View {
+    @State private var isLoading = false
+    var body: some View { /* Theme.* access safe here */ }
+}
+```
+
+**✅ Structured Concurrency (100% success rate across 26 files):**
+```swift
+// ✅ ALWAYS: nonisolated async functions instead of Task.detached
+private nonisolated func scheduleDelayedAction() {
+    Task { @MainActor in
+        try? await Task.sleep(for: .seconds(3))
+        onComplete()
+    }
+}
+
+// ✅ ALWAYS: Modern async/await APIs
+Task { @MainActor in
+    let settings = await UNUserNotificationCenter.current().notificationSettings()
+    updateSettings(settings)
+}
+```
+
+**❌ PROHIBITED Concurrency Anti-Patterns:**
+```swift
+// DON'T: DispatchQueue (iOS service corruption risk)
+DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { }
+DispatchQueue.main.async { }
+Task.detached { }  // Breaks priority inheritance
+
+// DON'T: Split MainActor isolation (confusing)
+class MixedManager {
+    @MainActor var uiProperty: String = ""
+    var backgroundProperty: Int = 0  // Confusing pattern
+}
+```
+
+## **🔊 VOICE INTERFACE & SPEECH RECOGNITION**
+
+**Audio Session Management:**
+```swift
+@MainActor
+class AudioSessionManager: ObservableObject {
+    @Published var isAudioSessionActive = false
+    
+    func configureAudioSession() async -> Bool {
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playAndRecord, mode: .default, 
+                                       options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setActive(true)
+            return true
+        } catch {
+            print("❌ Audio session failed: \(error)")
+            return false
+        }
+    }
+}
+```
+
+**Speech Recognition Error Handling:**
+```swift
+enum RecognitionErrorCategory: String {
+    case network, permissions, audioEngine, audioSession, 
+         recognitionUnavailable, timeout, lowConfidence, unknown
+}
+
+private func handleVoiceError(_ error: Error) {
+    let category = categorizeVoiceError(error)
+    
+    switch category {
+    case .permissionDenied:
+        errorMessage = "Please enable microphone access in Settings"
+        updateVoiceState(color: Theme.colors.voiceError)
+    case .networkUnavailable:
+        errorMessage = "Speech recognition requires internet connection"
+    case .recognitionFailed:
+        errorMessage = "Could not understand speech - please speak clearly"
+    }
+}
+```
+
+**Voice Input Service Pattern:**
+```swift
+@MainActor
+class VoiceInputService: NSObject, ObservableObject {
+    @Published var isListening = false
+    @Published var transcribedText = ""
+    @Published var errorMessage = ""
+    
+    private var speechRecognizer: SFSpeechRecognizer?
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+    private let audioEngine = AVAudioEngine()
+    
+    // ✅ Structured concurrency for timeouts
+    private nonisolated func scheduleVoiceTimeout() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(30))
+            if isListening { stopListening() }
+        }
+    }
+}
+```
+
+**Text-to-Speech with Priority Queue:**
+```swift
+enum SpeechPriority: Int { case low = 1, normal = 2, high = 3, critical = 4 }
+
+@MainActor
+class TextToSpeechManager: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    private var speechQueue: [(utterance: AVSpeechUtterance, priority: SpeechPriority)] = []
+    
+    func speak(_ text: String, priority: SpeechPriority = .normal) {
+        let utterance = AVSpeechUtterance(string: text)
+        configureSpeechSettings(for: utterance)
+        
+        let newItem = (utterance: utterance, priority: priority)
+        if let insertIndex = speechQueue.firstIndex(where: { $0.priority.rawValue < priority.rawValue }) {
+            speechQueue.insert(newItem, at: insertIndex)
+        } else {
+            speechQueue.append(newItem)
+        }
+        processQueue()
+    }
+}
+```
+
+## **🧭 SWIFTUI NAVIGATION & UI DEBUGGING**
+
+**Navigation Button Visibility Issues:**
+```swift
+// ✅ DO: Visual debugging with temporary backgrounds
+navigationOverlay
+    .background(Color.green.opacity(0.3))  // Debug background
+    .border(Color.red, width: 2)           // Debug border
+
+// ✅ DO: Explicit positioning for overlays
+ZStack {
+    GeometryReader { geometry in
+        // Main content
+    }
+    
+    VStack {
+        Spacer() // Push to bottom
+        navigationOverlay
+            .allowsHitTesting(true)
+            .zIndex(1000)
+    }
+}
+```
+
+**Debug Logging Strategy:**
+```swift
+// ✅ DO: Comprehensive debug logging
+.onAppear {
+    print("🔍 DEBUG: View appeared")
+    print("🔍 DEBUG: Frame: \(proxy.frame(in: .global))")
+    print("🔍 DEBUG: Safe area: \(proxy.safeAreaInsets)")
+}
+
+.onTapGesture { location in
+    print("🎯 DEBUG: Tapped at: \(location)")
+}
+```
+
+**SwiftUI State Management:**
+```swift
+// ✅ DO: Proper state ownership and passing
+@MainActor
+struct ParentView: View {
+    @State private var selectedTab = 0
+    @State private var isLoading = false
+    
+    var body: some View {
+        TabView(selection: $selectedTab) {
+            ChildView(isLoading: $isLoading)  // Pass binding down
+        }
+        .animation(Theme.animations.smooth, value: selectedTab)
+    }
+}
+```
+
+## **♿ ACCESSIBILITY & COMPATIBILITY**
+
+**Accessibility Override System:**
+```swift
+// ✅ DO: Detect accessibility interference
+private func isAccessibilityInterfering() -> Bool {
+    return UIAccessibility.isVoiceOverRunning ||
+           UIAccessibility.isSwitchControlRunning ||
+           UIAccessibility.isAssistiveTouchRunning
+}
+
+// ✅ DO: Provide accessibility override option
+@Published var overrideAccessibilityRestrictions = false
+
+// ✅ DO: VoiceOver-friendly voice controls
+Button("Start Voice Recording") {
+    startRecording()
+}
+.accessibilityLabel("Start voice recording for daily prompt")
+.accessibilityHint("Tap to begin recording your response")
+.accessibilityAction(.activate) { startRecording() }
+```
+
+**Dynamic Type Support:**
+```swift
+// ✅ DO: Support Dynamic Type with theme typography
+Text("Content")
+    .bodyPrimary()  // Automatically supports Dynamic Type
+    .lineLimit(nil)  // Allow text expansion
+    .minimumScaleFactor(0.8)  // Graceful degradation
+```
+
+## **🚨 PROVEN PRODUCTION PATTERNS**
+
+**File-by-File Modernization (26/26 100% success rate):**
+1. **Target Selection**: Identify highest violation concentration files
+2. **Pattern Application**: Apply proven architectural patterns
+3. **Build Validation**: Immediate compilation verification after each file
+4. **Progress Tracking**: Document violations eliminated
+5. **Pattern Replication**: Scale successful approaches
+
+**Error Prevention Strategies:**
+```swift
+// ✅ DO: Comprehensive error categorization
+private func categorizeError(_ error: Error) -> ErrorCategory {
+    if let afError = error as? AFError {
+        return .speechService
+    } else if error.localizedDescription.contains("permission") {
+        return .permissions
+    } else if error.localizedDescription.contains("network") {
+        return .network
+    }
+    return .unknown
+}
+
+// ✅ DO: Graceful error recovery
+private func recoverFromError(_ category: ErrorCategory) {
+    switch category {
+    case .speechService:
+        resetSpeechRecognizer()
+    case .permissions:
+        requestPermissions()
+    case .network:
+        showOfflineMode()
+    }
+}
+```
+
+**Animation Performance:**
+```swift
+// ✅ DO: Use theme animations with proper performance
+withAnimation(Theme.animations.bouncy) {
+    // UI changes
+}
+
+// ✅ DO: Respect reduced motion
+if !UIAccessibility.isReduceMotionEnabled {
+    withAnimation(Theme.animations.gentleSpring) {
+        // Animation-heavy changes
+    }
+} else {
+    // Instant changes for reduced motion
+}
+```
+
+## **📊 SUCCESS METRICS & VALIDATION**
+
+**Compliance Targets:**
+- **ZERO** critical violations (MainActor isolation)
+- **< 50** error violations (hardcoded colors/animations)
+- **100%** theme system usage across UI components
+- **100%** build success rate during development
+- **< 5 minute** theme switching capability
+
+**Automated Validation:**
+```bash
+# Complete validation workflow
+python3 ../../scripts/theme-compliance/detect_violations.py .  # Theme compliance
+./quick_build_check.sh                                         # Build + compliance
+xcodebuild build 2>&1 | grep -i "main.*actor"                 # Real MainActor issues
+```
+
+**Development Workflow:**
+1. **Analyze** requirements completely before coding
+2. **Apply** proven patterns from this guide
+3. **Validate** builds immediately after changes
+4. **Test** functionality with real user scenarios
+5. **Commit** only working, compliant code
+
+**Quality Gates:**
+- All compilation errors resolved
+- Theme compliance validated (< 50 ERROR violations)
+- Voice interface tested (if applicable)
+- Accessibility reviewed
+- Build performance verified (< 30 seconds)
+
+## **🚀 CI/CD & PRE-COMMIT COMPLIANCE**
+
+**🚨 MANDATORY: All code must pass CI/CD checks before PR merge**
+
+**SwiftLint Compliance:**
+```bash
+# Fix trailing whitespace issues
+find . -name "*.swift" -path "./Mindly/*" -exec sed -i '' 's/[[:space:]]*$//' {} \;
+find . -name "*.swift" -path "./MindlyWidget/*" -exec sed -i '' 's/[[:space:]]*$//' {} \;
+
+# Run SwiftLint locally before commits
+cd iOS/Mindly && swiftlint
+```
+
+**Pre-Commit Checklist:**
+- [ ] **Build Validation**: `./quick_build_check.sh` passes in <30 seconds
+- [ ] **Theme Compliance**: `python scripts/theme-compliance/detect_violations.py` shows <50 errors
+- [ ] **SwiftLint**: No errors or warnings
+- [ ] **Tests**: All unit tests pass
+- [ ] **Accessibility**: VoiceOver labels added for new UI
+
+**Common CI/CD Failures & Fixes:**
+```bash
+# Assignment check failure
+gh issue edit <issue-number> --add-assignee <username>
+
+# SwiftLint violations
+swiftlint autocorrect  # Auto-fix simple issues
+swiftlint lint --strict  # Check for all issues
+
+# Build errors
+xcodebuild clean build  # Clean build to resolve cache issues
+
+# Widget extension issues
+# Ensure both main app and widget targets are built
+```
+
+**GitHub Actions Integration:**
+- All PRs trigger automatic validation
+- Build must succeed for both Debug and Release configurations
+- SwiftLint must pass with no errors
+- Theme compliance check runs automatically
+- Security scan for exposed keys/secrets
+
+## **🎯 INTEGRATION PATTERNS**
+
+**Service Integration:**
+```swift
+// ✅ DO: Dependency injection with proper isolation
+@MainActor
+class FeatureView: View {
+    private let voiceService: VoiceInputService
+    private let themeManager: ThemeManager
+    
+    init(voiceService: VoiceInputService, themeManager: ThemeManager) {
+        self.voiceService = voiceService
+        self.themeManager = themeManager
+    }
+}
+```
+
+**Custom Component Creation:**
+```swift
+// ✅ DO: Reusable components with theme compliance
+@MainActor
+struct MindlyButton: View {
+    let title: String
+    let action: () -> Void
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(title, action: action)
+            .foregroundColor(Theme.colors.primaryText)
+            .background(Theme.colors.primary)
+            .padding(Theme.spacing.md)
+            .cornerRadius(Theme.spacing.radiusMedium)
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .animation(Theme.animations.bouncy, value: isPressed)
+            .onTapGesture {
+                isPressed.toggle()
+                // Reset after animation
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(150))
+                    isPressed = false
+                }
+            }
+    }
+}
+```
+
+---
+
+**🎯 CORE MANDATE: Every iOS change must use Theme.* system, validate builds, and follow structured concurrency patterns**
+
+**⚡ EFFICIENCY: Use proven patterns from this guide to achieve 100% build success rate**
+
+**🔧 VALIDATION: python3 ../../scripts/theme-compliance/detect_violations.py . && ./quick_build_check.sh**
+
+**🚀 SUCCESS: Follow file-by-file modernization approach with immediate validation**
