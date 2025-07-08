@@ -43,6 +43,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('background', 'src/assets/screens/wiz_screen_background.png');
     this.load.image('robe', 'src/assets/ui/wiz_ui_robe.png');
     this.load.image('bag', 'src/assets/ui/wiz_ui_bag.png');
+    this.load.image('pouch', 'src/assets/ui/wiz_ui_pouch.png');
     this.load.image('scroll', 'src/assets/ui/wiz_ui_scroll.png');
     this.load.image('claw', 'src/assets/ui/wiz_ui_claw_materials.png');
     this.load.image('claw_spells', 'src/assets/ui/wiz_ui_claw_spells.png');
@@ -127,11 +128,15 @@ export class GameScene extends Phaser.Scene {
   private createGameLayout() {
     // Based on 1280x720 layout with new UI positioning
     
-    // TEMPORARILY HIDDEN - Create material bag using UIManager (center-bottom area)
-    // this.uiManager.createMaterialBag(640, 500);
+    // Create material bag using UIManager (center-bottom area)
+    this.uiManager.createMaterialBag(640, 500);
     
-    // Create material slots (center-top) - position above bag
-    this.materialSlots = new MaterialSlots(this, 640, 300);
+    // Create material slots using UIManager (top of screen with padding)
+    const topPadding = 60; // Padding from top of screen
+    this.uiManager.createMaterialSlots(640, topPadding);
+    
+    // Create material slots (top of screen with padding)
+    this.materialSlots = new MaterialSlots(this, 640, topPadding);
     
     // Create spell window using UIManager (right side with 3% padding from screen edge)
     const screenWidth = this.scale.width;

@@ -4,7 +4,7 @@ export class MaterialBag extends Phaser.GameObjects.Container {
   private materials: Material[] = [];
   private maxCapacity: number = 15;
   private bagWidth: number = 160;
-  private bagHeight: number = 120;
+  private bagHeight: number = 160;
   private bagWalls: Phaser.Physics.Arcade.StaticGroup;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -14,7 +14,7 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     
     // Create visual representation
-    this.createBagVisual();
+    // this.createBagVisual(); // Hidden - bag asset from UIManager will fill this space
     
     // Create invisible walls for physics containment
     this.createBagWalls();

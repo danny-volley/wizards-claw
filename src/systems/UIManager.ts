@@ -14,6 +14,7 @@ export class UIManager {
   private backgroundImage!: Phaser.GameObjects.Image;
   private robeOverlay!: Phaser.GameObjects.Image;
   private materialBagContainer!: Phaser.GameObjects.Container;
+  private materialSlotsContainer!: Phaser.GameObjects.Container;
   private spellWindowContainer!: Phaser.GameObjects.Container;
   private craneContainer!: Phaser.GameObjects.Container;
   private characterAreaContainer!: Phaser.GameObjects.Container;
@@ -96,14 +97,49 @@ export class UIManager {
       y * this.scaleY
     );
     
-    // Add bag artwork
+    // Add bag artwork - scale to match physics area dimensions (160x120)
     const bagImage = this.scene.add.image(0, 0, 'bag');
-    bagImage.setScale(this.scaleX, this.scaleY);
+    
+    // Calculate scale to match physics area size (160x120)
+    const targetWidth = 160;
+    const targetHeight = 120;
+    const scaleX = targetWidth / bagImage.width;
+    const scaleY = targetHeight / bagImage.height;
+    
+    // Use the smaller scale to maintain aspect ratio while fitting within physics area
+    // Add much more scale since the bag asset doesn't fill the image frame
+    const bagScale = Math.min(scaleX, scaleY) * 2.2;
+    bagImage.setScale(bagScale);
+    
+    // Debug logging
+    console.log(`Bag image dimensions: ${bagImage.width}x${bagImage.height}`);
+    console.log(`Physics area dimensions: ${targetWidth}x${targetHeight}`);
+    console.log(`Calculated scale: ${bagScale}`);
+    console.log(`Final scaled size: ${bagImage.width * bagScale}x${bagImage.height * bagScale}`);
+    
     this.materialBagContainer.add(bagImage);
     
     this.gameAreaLayer.add(this.materialBagContainer);
     
     return this.materialBagContainer;
+  }
+  
+  public createMaterialSlots(x: number, y: number): Phaser.GameObjects.Container {
+    console.log(`UIManager: Creating material slots at (${x}, ${y})`);
+    
+    this.materialSlotsContainer = this.scene.add.container(
+      x * this.scaleX, 
+      y * this.scaleY
+    );
+    
+    // Add pouch artwork
+    const pouchImage = this.scene.add.image(0, 18, 'pouch'); // Moved down 18px (back up 12px from 30px)
+    pouchImage.setScale(this.scaleX * 0.35, this.scaleY * 0.35); // 40% bigger than previous 25% size
+    this.materialSlotsContainer.add(pouchImage);
+    
+    this.gameAreaLayer.add(this.materialSlotsContainer);
+    
+    return this.materialSlotsContainer;
   }
   
   public createSpellWindow(x: number, y: number): Phaser.GameObjects.Container {

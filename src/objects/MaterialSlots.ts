@@ -5,7 +5,7 @@ export class MaterialSlots extends Phaser.GameObjects.Container {
   private maxSlots: number = 2;
   private slotWidth: number = 50;
   private slotHeight: number = 50;
-  private slotSpacing: number = 60;
+  private slotSpacing: number = 80; // Increased spacing from 60 to 80
   private thirdSlotUnlocked: boolean = false;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -135,14 +135,15 @@ class MaterialSlot extends Phaser.GameObjects.Container {
     this.slotBackground.clear();
     
     if (this.material) {
-      // Filled slot
+      // Filled slot - more transparent
       this.slotBackground.fillStyle(0x4a4a4a);
       this.slotBackground.lineStyle(2, 0x666666);
+      this.slotBackground.setAlpha(0.3);
     } else {
-      // Empty slot
+      // Empty slot - more transparent
       this.slotBackground.fillStyle(0x2a2a2a);
       this.slotBackground.lineStyle(2, 0x666666, 1, 0.5);
-      this.slotBackground.setAlpha(0.7);
+      this.slotBackground.setAlpha(0.2);
     }
     
     this.slotBackground.fillRoundedRect(
