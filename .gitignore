@@ -1,1 +1,8 @@
 node_modules
+
+# Test coverage reports
+coverage/
+
+# macOS system files
+.DS_Store
+**/.DS_Store
