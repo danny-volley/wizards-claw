@@ -219,26 +219,65 @@ export class GameScene extends Phaser.Scene {
     const materialAreaX = 658; // 8px padding from left edge (650 + 8)
     const materialAreaWidth = 24; // Space for materials
     
-    // Cost materials (colored circles) - stacked vertically on left side
+    // Cost materials with colorblind-friendly shapes - stacked vertically on left side
     if (spell.cost.length > 0) {
       spell.cost.forEach((materialType, matIndex) => {
-        const circle = this.add.graphics();
+        const materialIcon = this.add.graphics();
         const color = this.getMaterialColor(materialType);
-        circle.fillStyle(color);
         
         // Stack materials vertically in the left area, centered horizontally
         const materialX = materialAreaX + (materialAreaWidth / 2); // Centered in material area
-        const materialRadius = 5; // Increased from 4 to 5 (25% larger)
+        const materialRadius = 5;
         
         // Calculate vertical positions - center around yPos for multiple materials
         const totalHeight = (spell.cost.length - 1) * 10; // 10px spacing between materials
         const startY = yPos - (totalHeight / 2);
         const materialY = startY + (matIndex * 10);
         
-        circle.fillCircle(materialX, materialY, materialRadius);
+        // Draw base circle with material color
+        materialIcon.fillStyle(color);
+        materialIcon.fillCircle(materialX, materialY, materialRadius);
+        
+        // Add colorblind-friendly shape overlay
+        materialIcon.fillStyle(0x000000, 0.8); // Semi-transparent black for contrast
+        
+        switch (materialType) {
+          case MaterialType.FIRE:
+            // Triangle pointing up (flame shape) - scaled down
+            const size = 3;
+            materialIcon.fillTriangle(
+              materialX, materialY - size,     // top
+              materialX - size, materialY + size,  // bottom left
+              materialX + size, materialY + size   // bottom right
+            );
+            break;
+            
+          case MaterialType.LEAF:
+            // Diamond/rhombus shape - scaled down
+            const diamondSize = 2.5;
+            materialIcon.fillPoints([
+              { x: materialX, y: materialY - diamondSize },        // top
+              { x: materialX + diamondSize, y: materialY },        // right
+              { x: materialX, y: materialY + diamondSize },        // bottom
+              { x: materialX - diamondSize, y: materialY }         // left
+            ]);
+            break;
+            
+          case MaterialType.ROCK:
+            // Square shape - scaled down
+            const squareSize = 2.5;
+            materialIcon.fillRect(
+              materialX - squareSize, 
+              materialY - squareSize, 
+              squareSize * 2, 
+              squareSize * 2
+            );
+            break;
+        }
+        
         // Darken materials during selection mode if spell is unavailable
         if (isSelectionMode && !spell.available) {
-          circle.setAlpha(0.4);
+          materialIcon.setAlpha(0.4);
         }
       });
     } else {
@@ -316,10 +355,10 @@ export class GameScene extends Phaser.Scene {
     const deltaY = material1.y - material2.y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    if (distance > 0 && distance < 25) {
+    if (distance > 0 && distance < 30) { // Updated for 14 radius materials (28 diameter + 2px buffer)
       const normalX = deltaX / distance;
       const normalY = deltaY / distance;
-      const overlap = 25 - distance;
+      const overlap = 30 - distance;
       
       // Apply separation force scaled by overlap
       const separationForce = overlap * 3;

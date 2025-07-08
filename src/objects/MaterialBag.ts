@@ -19,8 +19,8 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     // Create invisible walls for physics containment
     this.createBagWalls();
     
-    // Initialize with some materials
-    this.addRandomMaterials(8);
+    // Initialize with 50% more materials
+    this.addRandomMaterials(12);
   }
   
   private createBagVisual() {
@@ -122,13 +122,25 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     const materialTypes = [MaterialType.FIRE, MaterialType.LEAF, MaterialType.ROCK];
     let added = 0;
     
-    for (let i = 0; i < count && this.materials.length < this.maxCapacity; i++) {
-      // Ensure balanced distribution of material types
+    // Create balanced distribution array
+    const materialsToAdd: MaterialType[] = [];
+    for (let i = 0; i < count; i++) {
       const typeIndex = i % materialTypes.length;
-      const materialType = materialTypes[typeIndex];
+      materialsToAdd.push(materialTypes[typeIndex]);
+    }
+    
+    // Shuffle the array to randomize placement
+    for (let i = materialsToAdd.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [materialsToAdd[i], materialsToAdd[j]] = [materialsToAdd[j], materialsToAdd[i]];
+    }
+    
+    // Add materials with shuffled types
+    for (let i = 0; i < materialsToAdd.length && this.materials.length < this.maxCapacity; i++) {
+      const materialType = materialsToAdd[i];
       
-      // Add materials with staggered timing to prevent mid-air collisions
-      this.scene.time.delayedCall(i * 300, () => {
+      // Add materials with more staggered timing to prevent mid-air collisions
+      this.scene.time.delayedCall(i * 400, () => {
         if (this.materials.length < this.maxCapacity) {
           const material = new Material(
             this.scene,
@@ -154,11 +166,24 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     
     this.materials.push(material);
     
-    // Position material inside bag bounds with better spacing
+    // Position material inside bag bounds with improved spacing grid
     const bagBounds = this.getBounds();
-    const dropZoneWidth = this.bagWidth - 60; // More margin for spacing
-    const randomX = bagBounds.x + (bagBounds.width - dropZoneWidth) / 2 + Math.random() * dropZoneWidth;
-    const dropY = bagBounds.y + 5; // Drop from just inside the top of the bag
+    const dropZoneWidth = this.bagWidth - 80; // Even more margin for spacing
+    
+    // Create a grid-based drop system to prevent clustering
+    const gridCols = 3;
+    const gridRows = 2;
+    const materialIndex = this.materials.length;
+    const gridX = (materialIndex % gridCols) / (gridCols - 1); // 0, 0.5, 1
+    const gridY = Math.floor(materialIndex / gridCols) / Math.max(1, gridRows - 1); // 0, 1
+    
+    // Add small random offset to grid position
+    const randomOffsetX = (Math.random() - 0.5) * 15;
+    const randomOffsetY = (Math.random() - 0.5) * 10;
+    
+    const randomX = bagBounds.x + (bagBounds.width - dropZoneWidth) / 2 + 
+                   (gridX * dropZoneWidth) + randomOffsetX;
+    const dropY = bagBounds.y + 5 + (gridY * 5) + randomOffsetY; // Slightly staggered heights
     
     material.setPosition(randomX, dropY);
     
@@ -168,11 +193,11 @@ export class MaterialBag extends Phaser.GameObjects.Container {
       gameScene.getMaterialsGroup().add(material);
     }
     
-    // Add natural falling velocity with minimal horizontal variance
+    // Add natural falling velocity with very minimal horizontal variance
     const body = material.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(
-      (Math.random() - 0.5) * 10, // Minimal horizontal variance
-      Math.random() * 20 + 40 // Stronger downward velocity
+      (Math.random() - 0.5) * 5, // Very minimal horizontal variance to prevent collisions
+      Math.random() * 15 + 35 // Consistent downward velocity
     );
     
     // Notify scene that a material was dropped

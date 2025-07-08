@@ -152,22 +152,22 @@ export class Crane extends Phaser.GameObjects.Container {
     if (!this.isDescending) return;
     
     const clawWorldPos = this.getClawWorldPosition();
-    const grabRadius = 25;
+    const contactRadius = 15; // Only stop when actually touching a material (slightly larger than material radius)
     
     // Get all materials in the scene
     const materials = this.scene.children.list.filter(child => 
       child instanceof Material
     ) as Material[];
     
-    // Check if claw is touching any material
+    // Check if claw tip is actually touching any material
     materials.forEach(material => {
       const distance = Phaser.Math.Distance.Between(
         clawWorldPos.x, clawWorldPos.y,
         material.x, material.y
       );
       
-      if (distance < grabRadius) {
-        // Stop descent early - we hit a material
+      if (distance < contactRadius) {
+        // Stop descent - we're in contact with a material
         this.scene.tweens.killTweensOf(this);
         this.checkForMaterialGrab();
       }
@@ -178,7 +178,7 @@ export class Crane extends Phaser.GameObjects.Container {
     if (!this.isDescending) return;
     
     const clawWorldPos = this.getClawWorldPosition();
-    const grabRadius = 30;
+    const grabRadius = 16; // Just slightly larger than material radius for precise grabbing
     
     // Get all materials in the scene
     const materials = this.scene.children.list.filter(child => 
