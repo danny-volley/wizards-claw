@@ -8,6 +8,7 @@ import { SpellArrow } from '../systems/SpellArrow';
 import { SpellDatabase, SpellRecipe } from '../systems/SpellDatabase';
 import { SpellEffectsSystem } from '../systems/SpellEffectsSystem';
 import { RecipeHintSystem } from '../systems/RecipeHintSystem';
+import { UIManager } from '../systems/UIManager';
 
 export class GameScene extends Phaser.Scene {
   private inputSystem!: InputSystem;
@@ -24,13 +25,31 @@ export class GameScene extends Phaser.Scene {
   private lastMaterialDropTime: number = 0;
   private spellEffectsSystem!: SpellEffectsSystem;
   private recipeHintSystem!: RecipeHintSystem;
+  private uiManager!: UIManager;
+  private spellWindowX!: number;
+  
+  // Spell window dimensions - shared constants
+  private readonly SPELL_WINDOW_WIDTH = 300;
+  private readonly SPELL_WINDOW_PADDING = 20;
+  private readonly SPELL_ITEM_WIDTH = this.SPELL_WINDOW_WIDTH - (this.SPELL_WINDOW_PADDING * 2);
   
   constructor() {
     super({ key: 'GameScene' });
   }
 
   preload() {
-    // Assets will be created programmatically
+    // Load UI assets
+    this.load.image('background', 'src/assets/screens/wiz_screen_background.png');
+    this.load.image('robe', 'src/assets/ui/wiz_ui_robe.png');
+    this.load.image('bag', 'src/assets/ui/wiz_ui_bag.png');
+    this.load.image('scroll', 'src/assets/ui/wiz_ui_scroll.png');
+    this.load.image('claw', 'src/assets/ui/wiz_ui_claw_materials.png');
+    
+    // Load character assets
+    this.load.image('char_burok', 'src/assets/characters/wiz_char_burok.png');
+    this.load.image('char_yuvor', 'src/assets/characters/wiz_char_yuvor.png');
+    
+    console.log('GameScene: Loading UI assets');
   }
 
   create() {
@@ -41,9 +60,19 @@ export class GameScene extends Phaser.Scene {
       SpellDatabase.initialize();
       console.log('SpellDatabase initialized');
       
-      // Set world bounds
-      this.physics.world.setBounds(0, 0, 800, 600);
-      console.log('World bounds set');
+      // Set world bounds for new resolution
+      this.physics.world.setBounds(0, 0, 1280, 720);
+      console.log('World bounds set to 1280x720');
+      
+      // Initialize UI Manager
+      this.uiManager = new UIManager(this);
+      console.log('UIManager initialized');
+      
+      // Create background first
+      this.uiManager.createBackground();
+      
+      // Create robe overlay (75% screen coverage, right-aligned)
+      this.uiManager.createRobeOverlay();
       
       // Create materials group for collision management
       this.materialsGroup = this.physics.add.group();
@@ -76,14 +105,14 @@ export class GameScene extends Phaser.Scene {
       // Initial game state
       this.gameState = 'selecting';
       
-      // Add instructions
-      this.add.text(400, 540, 'Press SPACEBAR to operate the crane', {
-        fontSize: '16px',
+      // Add instructions - positioned for 1280x720
+      this.add.text(640, 650, 'Press SPACEBAR to operate the crane', {
+        fontSize: '20px',
         color: '#cccccc'
       }).setOrigin(0.5);
       
-      this.add.text(400, 560, 'Press H to toggle recipe hints', {
-        fontSize: '14px',
+      this.add.text(640, 680, 'Press H to toggle recipe hints', {
+        fontSize: '16px',
         color: '#aaaaaa'
       }).setOrigin(0.5);
       
@@ -94,20 +123,33 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createGameLayout() {
-    // Based on mockup: Left side is combat area, center is crane/bag, right is spell menu
+    // Based on 1280x720 layout with new UI positioning
     
-    // Create material bag (center-bottom)
-    this.materialBag = new MaterialBag(this, 400, 350);
+    // TEMPORARILY HIDDEN - Create material bag using UIManager (center-bottom area)
+    // this.uiManager.createMaterialBag(640, 500);
     
-    // Create material slots (center-top)
-    this.materialSlots = new MaterialSlots(this, 400, 150);
+    // Create material slots (center-top) - position above bag
+    this.materialSlots = new MaterialSlots(this, 640, 300);
     
-    // Create crane (above bag) - pass bag bottom Y position
-    const bagBottomY = 350 + 60; // bag Y + half bag height
-    this.crane = new Crane(this, 400, 200, bagBottomY);
+    // Create spell window using UIManager (right side with 3% padding from screen edge)
+    const screenWidth = this.scale.width;
+    const rightPadding = screenWidth * 0.03; // 3% of screen width
+    this.spellWindowX = screenWidth - rightPadding - this.SPELL_WINDOW_WIDTH;
+    this.uiManager.createSpellWindow(this.spellWindowX, 200);
     
-    // Create spell selection system  
-    this.spellArrow = new SpellArrow(this, 625, 250); // Position more to the left for wider spell window
+    // TEMPORARILY HIDDEN - Create crane using UIManager (above bag)
+    // this.uiManager.createCrane(640, 350);
+    
+    // Create character area (left side for combat)
+    this.uiManager.createCharacterArea(200, 360);
+    
+    // Initialize existing systems with new positions
+    this.materialBag = new MaterialBag(this, 640, 500);
+    const bagBottomY = 500 + 60; // bag Y + half bag height
+    this.crane = new Crane(this, 640, 350, bagBottomY);
+    
+    // Create spell selection system (positioned with spell window)
+    this.spellArrow = new SpellArrow(this, this.spellWindowX, 360);
     this.createSpellMenu();
     
     // Create combat area placeholder (left side)
@@ -116,26 +158,26 @@ export class GameScene extends Phaser.Scene {
   
   
   private createCombatArea() {
-    // Left side combat area placeholder
-    const combatArea = this.add.container(100, 300);
+    // Left side combat area placeholder - positioned for 1280x720
+    const combatArea = this.add.container(200, 360);
     
     // Background
     const combatBg = this.add.graphics();
     combatBg.fillStyle(0x2a2a2a);
-    combatBg.fillRoundedRect(0, 0, 200, 200, 10);
+    combatBg.fillRoundedRect(-100, -100, 200, 200, 10);
     combatBg.lineStyle(2, 0x444444);
-    combatBg.strokeRoundedRect(0, 0, 200, 200, 10);
+    combatBg.strokeRoundedRect(-100, -100, 200, 200, 10);
     combatArea.add(combatBg);
     
     // Player and enemy placeholders
-    const playerText = this.add.text(100, 160, 'You', {
-      fontSize: '14px',
+    const playerText = this.add.text(0, 60, 'You', {
+      fontSize: '18px',
       color: '#ffffff'
     }).setOrigin(0.5);
     combatArea.add(playerText);
     
-    const enemyText = this.add.text(100, 40, 'Slimy Toad', {
-      fontSize: '14px',
+    const enemyText = this.add.text(0, -60, 'Slimy Toad', {
+      fontSize: '18px',
       color: '#ffffff'
     }).setOrigin(0.5);
     combatArea.add(enemyText);
@@ -206,12 +248,15 @@ export class GameScene extends Phaser.Scene {
       adjustedStartY = screenHeight - finalHeight - 50;
     }
     
-    // Create spell menu background
-    const menuBg = this.add.graphics();
-    menuBg.fillStyle(0x3a3a3a);
-    menuBg.fillRoundedRect(640, adjustedStartY, 150, finalHeight, 10);
-    menuBg.lineStyle(2, 0x555555);
-    menuBg.strokeRoundedRect(640, adjustedStartY, 150, finalHeight, 10);
+    // TEMPORARILY HIDDEN - Create spell menu background
+    // const menuBg = this.add.graphics();
+    // menuBg.fillStyle(0x3a3a3a);
+    // menuBg.fillRoundedRect(640, adjustedStartY, 150, finalHeight, 10);
+    // menuBg.lineStyle(2, 0x555555);
+    // menuBg.strokeRoundedRect(640, adjustedStartY, 150, finalHeight, 10);
+    
+    // Update scroll background to match spell window size
+    this.uiManager.updateSpellWindowSize(this.SPELL_WINDOW_WIDTH, finalHeight, adjustedStartY);
     
     // Return the first spell Y position (menu start + top padding)
     return adjustedStartY + 30; // 30px from top of menu to first spell
@@ -262,37 +307,53 @@ export class GameScene extends Phaser.Scene {
   private drawSpellItem(spell: SpellRecipe, yPos: number, isSelectionMode: boolean, available: boolean) {
     // Determine colors and alpha based on availability and mode
     const bgColor = available ? 0x4a4a4a : 0x2a2a2a;
-    // During selection mode, darken text for unavailable spells; otherwise keep readable
-    const textColor = (isSelectionMode && !available) ? '#666666' : '#ffffff';
-    const descColor = (isSelectionMode && !available) ? '#555555' : '#cccccc';
+    // Use black text for spell names and descriptions on the scroll background
+    const textColor = (isSelectionMode && !available) ? '#666666' : '#000000';
+    const descColor = (isSelectionMode && !available) ? '#555555' : '#333333';
     const alpha = available ? 1.0 : (isSelectionMode ? 0.5 : 1.0);
     
-    // Spell background - updated width to match menu
+    // Spell background - mostly transparent and fitting within scroll bounds
     const spellBg = this.add.graphics();
     spellBg.fillStyle(bgColor);
-    spellBg.fillRoundedRect(650, yPos - 18, 130, 36, 5);
+    spellBg.fillRoundedRect(this.spellWindowX + this.SPELL_WINDOW_PADDING, yPos - 18, this.SPELL_ITEM_WIDTH, 36, 5);
+    spellBg.setAlpha(0.1); // Make mostly transparent
     if (!available && isSelectionMode) {
-      spellBg.setAlpha(alpha);
+      spellBg.setAlpha(0.05); // Even more transparent for unavailable spells
     }
     
     // Material cost area - centered on left side with padding
-    const materialAreaX = 658; // 8px padding from left edge (650 + 8)
+    const materialAreaX = this.spellWindowX + this.SPELL_WINDOW_PADDING + 8; // 8px padding from spell background edge
     const materialAreaWidth = 24; // Space for materials
     
-    // Cost materials with colorblind-friendly shapes - stacked vertically on left side
+    // Cost materials with colorblind-friendly shapes - first two stacked vertically, third on right
     if (spell.materials.length > 0) {
       spell.materials.forEach((materialType, matIndex) => {
         const materialIcon = this.add.graphics();
         const color = this.getMaterialColor(materialType);
         
-        // Stack materials vertically in the left area, centered horizontally
-        const materialX = materialAreaX + (materialAreaWidth / 2); // Centered in material area
-        const materialRadius = 5;
+        const materialRadius = 8; // Larger materials
+        const padding = 3; // Reduced padding between materials
         
-        // Calculate vertical positions - center around yPos for multiple materials
-        const totalHeight = (spell.materials.length - 1) * 10; // 10px spacing between materials
-        const startY = yPos - (totalHeight / 2);
-        const materialY = startY + (matIndex * 10);
+        let materialX, materialY;
+        
+        if (matIndex < 2) {
+          // First two materials: stack vertically on left side
+          materialX = materialAreaX + (materialAreaWidth / 2); // Centered in material area
+          
+          if (spell.materials.length === 1) {
+            // Single material: center vertically
+            materialY = yPos;
+          } else {
+            // Multiple materials: stack with padding, centered around yPos
+            const totalHeight = (materialRadius * 2 * 2) + padding; // Height of two materials with padding
+            const startY = yPos - (totalHeight / 2);
+            materialY = startY + materialRadius + (matIndex * (materialRadius * 2 + padding));
+          }
+        } else {
+          // Third material: positioned on the right, centered vertically
+          materialX = materialAreaX + materialAreaWidth + materialRadius + 2; // To the right of the area
+          materialY = yPos; // Centered vertically
+        }
         
         // Draw base circle with material color
         materialIcon.fillStyle(color);
@@ -303,8 +364,8 @@ export class GameScene extends Phaser.Scene {
         
         switch (materialType) {
           case MaterialType.FIRE:
-            // Triangle pointing up (flame shape) - scaled down
-            const size = 3;
+            // Triangle pointing up (flame shape) - scaled for larger materials
+            const size = 5; // Scaled for radius 8
             materialIcon.fillTriangle(
               materialX, materialY - size,     // top
               materialX - size, materialY + size,  // bottom left
@@ -313,8 +374,8 @@ export class GameScene extends Phaser.Scene {
             break;
             
           case MaterialType.LEAF:
-            // Diamond/rhombus shape - scaled down
-            const diamondSize = 2.5;
+            // Diamond/rhombus shape - scaled for larger materials
+            const diamondSize = 4; // Scaled for radius 8
             materialIcon.fillPoints([
               { x: materialX, y: materialY - diamondSize },        // top
               { x: materialX + diamondSize, y: materialY },        // right
@@ -324,8 +385,8 @@ export class GameScene extends Phaser.Scene {
             break;
             
           case MaterialType.ROCK:
-            // Square shape - scaled down
-            const squareSize = 2.5;
+            // Square shape - scaled for larger materials
+            const squareSize = 4; // Scaled for radius 8
             materialIcon.fillRect(
               materialX - squareSize, 
               materialY - squareSize, 
@@ -354,19 +415,31 @@ export class GameScene extends Phaser.Scene {
       }
     }
     
-    // Spell name - positioned to the right of materials
-    const spellNameX = materialAreaX + materialAreaWidth + 4; // 4px gap after material area
-    const spellText = this.add.text(spellNameX, yPos - 8, spell.name, {
-      fontSize: '11px',
-      color: textColor,
-      fontStyle: 'bold'
-    });
+    // Calculate available space for text layout
+    const textStartX = materialAreaX + materialAreaWidth + 4; // 4px gap after material area
+    const totalTextWidth = this.SPELL_ITEM_WIDTH - (textStartX - (this.spellWindowX + this.SPELL_WINDOW_PADDING));
+    const nameWidth = Math.floor(totalTextWidth * 0.4); // 40% of available space for name
+    const descWidth = Math.floor(totalTextWidth * 0.55); // 55% of available space for description (5% gap)
     
-    // Spell description - below the name
-    const descText = this.add.text(spellNameX, yPos + 4, spell.effect.description, {
-      fontSize: '9px',
-      color: descColor
+    // Spell name - positioned to the right of materials (left side)
+    const spellText = this.add.text(textStartX, yPos, spell.name, {
+      fontSize: '14px', // 30% bigger than 11px
+      color: textColor,
+      fontStyle: 'bold',
+      align: 'center',
+      wordWrap: { width: nameWidth, useAdvancedWrap: true }
     });
+    spellText.setOrigin(0, 0.5); // Center vertically at yPos (middle of spell UI)
+    
+    // Spell description - positioned to the right of name (right side)
+    const descStartX = textStartX + nameWidth + 8; // 8px gap between name and description
+    const descText = this.add.text(descStartX, yPos, spell.effect.description, {
+      fontSize: '12px', // 30% bigger than 9px
+      color: descColor,
+      align: 'center',
+      wordWrap: { width: descWidth, useAdvancedWrap: true }
+    });
+    descText.setOrigin(0, 0.5); // Center vertically at yPos (middle of spell UI)
   }
   
 
