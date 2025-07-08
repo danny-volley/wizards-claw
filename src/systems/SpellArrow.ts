@@ -1,6 +1,6 @@
 import { SpellDatabase, SpellRecipe } from './SpellDatabase';
 
-export class SpellArrow extends Phaser.GameObjects.Graphics {
+export class SpellArrow extends Phaser.GameObjects.Container {
   private isActive: boolean = false;
   private arrowSpeed: number = 0.02; // Similar to crane speed
   private currentAngle: number = 0;
@@ -10,6 +10,7 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
   private baseX: number; // Store the initial X position
   private availableSpells: SpellRecipe[] = []; // Store available spells for timing zones
   private timingZones: Map<number, { centerY: number, zoneSize: number }> = new Map();
+  private clawImage: Phaser.GameObjects.Image;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -22,15 +23,26 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
   }
   
   private createArrow() {
-    this.clear();
-    this.fillStyle(0xffffff);
+    // Clear any existing elements
+    this.removeAll(true);
     
-    // Create a triangle arrow pointing right (toward spells)
-    this.fillTriangle(0, -8, 12, 0, 0, 8);
+    // Create claw image
+    this.clawImage = this.scene.add.image(0, 0, 'claw_spells');
     
-    // Add a small outline for visibility
-    this.lineStyle(1, 0x000000);
-    this.strokeTriangle(0, -8, 12, 0, 0, 8);
+    // Scale down the image (it's quite large)
+    this.clawImage.setScale(0.3); // Adjust this value as needed
+    
+    // Set the origin to the selection point (x:980, y:365 in the original image)
+    // Convert to normalized coordinates (0-1) based on image size
+    const imageWidth = this.clawImage.width;
+    const imageHeight = this.clawImage.height;
+    const originX = 980 / imageWidth;
+    const originY = 365 / imageHeight;
+    
+    this.clawImage.setOrigin(originX, originY);
+    
+    // Add to container
+    this.add(this.clawImage);
   }
   
   public startSelection() {

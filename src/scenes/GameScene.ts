@@ -27,6 +27,7 @@ export class GameScene extends Phaser.Scene {
   private recipeHintSystem!: RecipeHintSystem;
   private uiManager!: UIManager;
   private spellWindowX!: number;
+  private spellDisplayElements: Phaser.GameObjects.GameObject[] = []; // Track spell elements for clearing
   
   // Spell window dimensions - shared constants
   private readonly SPELL_WINDOW_WIDTH = 300;
@@ -44,6 +45,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('bag', 'src/assets/ui/wiz_ui_bag.png');
     this.load.image('scroll', 'src/assets/ui/wiz_ui_scroll.png');
     this.load.image('claw', 'src/assets/ui/wiz_ui_claw_materials.png');
+    this.load.image('claw_spells', 'src/assets/ui/wiz_ui_claw_spells.png');
     
     // Load character assets
     this.load.image('char_burok', 'src/assets/characters/wiz_char_burok.png');
@@ -218,13 +220,17 @@ export class GameScene extends Phaser.Scene {
   }
   
   private clearSpellDisplay() {
-    // Clear existing spell graphics and texts, but preserve the spell arrow
-    this.children.list.forEach(child => {
-      if ((child instanceof Phaser.GameObjects.Text && child.x > 600) ||
-          (child instanceof Phaser.GameObjects.Graphics && child.x > 600 && child.y > 190 && child !== this.spellArrow)) {
-        child.destroy();
+    // Clear all tracked spell elements
+    this.spellDisplayElements.forEach(element => {
+      if (element && element.active) {
+        element.destroy();
       }
     });
+    
+    // Clear the tracking array
+    this.spellDisplayElements = [];
+    
+    console.log(`Cleared ${this.spellDisplayElements.length} tracked spell display elements`);
   }
   
   private createDynamicSpellMenu(spellCount: number): number {
@@ -310,7 +316,7 @@ export class GameScene extends Phaser.Scene {
     // Use black text for spell names and descriptions on the scroll background
     const textColor = (isSelectionMode && !available) ? '#666666' : '#000000';
     const descColor = (isSelectionMode && !available) ? '#555555' : '#333333';
-    const alpha = available ? 1.0 : (isSelectionMode ? 0.5 : 1.0);
+    const alpha = available ? 1.0 : (isSelectionMode ? 0.3 : 1.0); // Much lower opacity for unavailable spells
     
     // Spell background - mostly transparent and fitting within scroll bounds
     const spellBg = this.add.graphics();
@@ -318,8 +324,9 @@ export class GameScene extends Phaser.Scene {
     spellBg.fillRoundedRect(this.spellWindowX + this.SPELL_WINDOW_PADDING, yPos - 18, this.SPELL_ITEM_WIDTH, 36, 5);
     spellBg.setAlpha(0.1); // Make mostly transparent
     if (!available && isSelectionMode) {
-      spellBg.setAlpha(0.05); // Even more transparent for unavailable spells
+      spellBg.setAlpha(0.02); // Much more transparent for unavailable spells
     }
+    this.spellDisplayElements.push(spellBg); // Track for clearing
     
     // Material cost area - centered on left side with padding
     const materialAreaX = this.spellWindowX + this.SPELL_WINDOW_PADDING + 8; // 8px padding from spell background edge
@@ -398,8 +405,11 @@ export class GameScene extends Phaser.Scene {
         
         // Darken materials during selection mode if spell is unavailable
         if (isSelectionMode && !available) {
-          materialIcon.setAlpha(0.4);
+          materialIcon.setAlpha(0.2); // Much lower opacity for unavailable spells
         }
+        
+        // Track material icon for clearing
+        this.spellDisplayElements.push(materialIcon);
       });
     } else {
       // Gather spell - show a special icon in material area
@@ -411,8 +421,11 @@ export class GameScene extends Phaser.Scene {
       gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 8, yPos);
       // Darken icon during selection mode if spell is unavailable
       if (isSelectionMode && !available) {
-        gatherIcon.setAlpha(0.4);
+        gatherIcon.setAlpha(0.2); // Much lower opacity for unavailable spells
       }
+      
+      // Track gather icon for clearing
+      this.spellDisplayElements.push(gatherIcon);
     }
     
     // Calculate available space for text layout
@@ -430,6 +443,10 @@ export class GameScene extends Phaser.Scene {
       wordWrap: { width: nameWidth, useAdvancedWrap: true }
     });
     spellText.setOrigin(0, 0.5); // Center vertically at yPos (middle of spell UI)
+    if (isSelectionMode && !available) {
+      spellText.setAlpha(alpha); // Apply lower opacity for unavailable spells
+    }
+    this.spellDisplayElements.push(spellText); // Track for clearing
     
     // Spell description - positioned to the right of name (right side)
     const descStartX = textStartX + nameWidth + 8; // 8px gap between name and description
@@ -440,6 +457,10 @@ export class GameScene extends Phaser.Scene {
       wordWrap: { width: descWidth, useAdvancedWrap: true }
     });
     descText.setOrigin(0, 0.5); // Center vertically at yPos (middle of spell UI)
+    if (isSelectionMode && !available) {
+      descText.setAlpha(alpha); // Apply lower opacity for unavailable spells
+    }
+    this.spellDisplayElements.push(descText); // Track for clearing
   }
   
 
