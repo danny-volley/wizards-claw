@@ -61,22 +61,39 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
     }
     
     // Calculate vertical position using sine wave (pendulum motion)
-    // Map sine wave (-1 to 1) to spell menu height
+    // Map sine wave (-1 to 1) to full range with buffers
     const sineValue = Math.sin(this.currentAngle);
     const normalizedPosition = (sineValue + 1) / 2; // Convert to 0-1 range
-    const yOffset = normalizedPosition * this.spellMenuHeight;
     
-    // Position arrow vertically within spell menu, keeping X position fixed
+    // Calculate position with buffers at top and bottom
+    const spellSpacing = 45;
+    const buffer = 30; // Buffer distance beyond first/last spell
+    const firstSpellOffset = 0; // First spell is at spellMenuY
+    const lastSpellOffset = (this.spellCount - 1) * spellSpacing; // Last spell position
+    const totalRange = lastSpellOffset + (buffer * 2); // Full range including buffers
+    
+    // Position arrow from buffer above first spell to buffer below last spell
+    const yOffset = (normalizedPosition * totalRange) - buffer;
+    
+    // Position arrow vertically, keeping X position fixed
     this.setPosition(this.baseX, this.spellMenuY + yOffset);
   }
   
   public getCurrentSpellIndex(): number {
     if (!this.isActive) return -1;
     
-    // Calculate which spell the arrow is pointing to
+    // Calculate which spell the arrow is pointing to based on the new positioning
     const relativeY = this.y - this.spellMenuY;
-    const spellHeight = this.spellMenuHeight / this.spellCount;
-    const spellIndex = Math.floor(relativeY / spellHeight);
+    const spellSpacing = 45;
+    const buffer = 30;
+    
+    // Check if arrow is in buffer zones (return -1 if in buffer)
+    if (relativeY < 0 || relativeY > (this.spellCount - 1) * spellSpacing) {
+      return -1; // Arrow is in buffer zone, no spell selected
+    }
+    
+    // Calculate which spell the arrow is over
+    const spellIndex = Math.round(relativeY / spellSpacing);
     
     // Clamp to valid range
     return Math.max(0, Math.min(this.spellCount - 1, spellIndex));

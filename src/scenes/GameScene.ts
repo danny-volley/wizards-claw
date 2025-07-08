@@ -82,7 +82,7 @@ export class GameScene extends Phaser.Scene {
     this.crane = new Crane(this, 400, 200, bagBottomY);
     
     // Create spell selection system  
-    this.spellArrow = new SpellArrow(this, 635, 250); // Position more to the left so it's not behind the spell window
+    this.spellArrow = new SpellArrow(this, 625, 250); // Position more to the left for wider spell window
     this.createSpellMenu();
     
     // Create combat area placeholder (left side)
@@ -117,12 +117,12 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createSpellMenu() {
-    // Spell menu background
+    // Spell menu background - widened to accommodate descriptions
     const menuBg = this.add.graphics();
     menuBg.fillStyle(0x3a3a3a);
-    menuBg.fillRoundedRect(650, 200, 120, 300, 10);
+    menuBg.fillRoundedRect(640, 200, 150, 300, 10);
     menuBg.lineStyle(2, 0x555555);
-    menuBg.strokeRoundedRect(650, 200, 120, 300, 10);
+    menuBg.strokeRoundedRect(640, 200, 150, 300, 10);
     
     // Update available spells based on current materials
     this.updateAvailableSpells();
@@ -154,10 +154,10 @@ export class GameScene extends Phaser.Scene {
   }
   
   private clearSpellDisplay() {
-    // Clear existing spell graphics and texts
+    // Clear existing spell graphics and texts, but preserve the spell arrow
     this.children.list.forEach(child => {
       if ((child instanceof Phaser.GameObjects.Text && child.x > 600) ||
-          (child instanceof Phaser.GameObjects.Graphics && child.x > 600 && child.y > 190)) {
+          (child instanceof Phaser.GameObjects.Graphics && child.x > 600 && child.y > 190 && child !== this.spellArrow)) {
         child.destroy();
       }
     });
@@ -168,32 +168,7 @@ export class GameScene extends Phaser.Scene {
     
     spells.forEach((spell, index) => {
       const yPos = 250 + (index * 45); // 45px spacing
-      
-      // Spell background
-      const spellBg = this.add.graphics();
-      spellBg.fillStyle(spell.available ? 0x4a4a4a : 0x2a2a2a);
-      spellBg.fillRoundedRect(660, yPos - 18, 100, 36, 5);
-      
-      // Spell name
-      this.add.text(665, yPos - 5, spell.name, {
-        fontSize: '12px',
-        color: spell.available ? '#ffffff' : '#666666'
-      });
-      
-      // Cost materials (colored circles)
-      if (spell.cost.length > 0) {
-        spell.cost.forEach((materialType, matIndex) => {
-          const circle = this.add.graphics();
-          const color = this.getMaterialColor(materialType);
-          circle.fillStyle(color);
-          circle.fillCircle(665 + (matIndex * 12), yPos + 8, 4);
-          if (!spell.available) {
-            circle.setAlpha(0.4);
-          }
-        });
-      } else {
-        // Gather - no icon needed, just text
-      }
+      this.drawSpellItem(spell, yPos, false); // false = not selection mode
     });
   }
   
@@ -204,34 +179,13 @@ export class GameScene extends Phaser.Scene {
     
     // Draw available spells first
     availableSpells.forEach((spell, index) => {
-      // Spell background
-      const spellBg = this.add.graphics();
-      spellBg.fillStyle(0x4a4a4a);
-      spellBg.fillRoundedRect(660, yPos - 18, 100, 36, 5);
-      
-      // Spell name
-      this.add.text(710, yPos, spell.name, {
-        fontSize: '14px',
-        color: '#ffffff'
-      }).setOrigin(0.5);
-      
+      this.drawSpellItem(spell, yPos, true); // true = selection mode
       yPos += 45;
     });
     
     // Draw unavailable spells at bottom (darkened)
     unavailableSpells.forEach((spell, index) => {
-      // Spell background (darker)
-      const spellBg = this.add.graphics();
-      spellBg.fillStyle(0x1a1a1a);
-      spellBg.fillRoundedRect(660, yPos - 18, 100, 36, 5);
-      spellBg.setAlpha(0.5);
-      
-      // Spell name (grayed out)
-      this.add.text(710, yPos, spell.name, {
-        fontSize: '14px',
-        color: '#444444'
-      }).setOrigin(0.5);
-      
+      this.drawSpellItem(spell, yPos, true); // true = selection mode
       yPos += 45;
     });
     
@@ -242,6 +196,89 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private drawSpellItem(spell: {name: string, cost: MaterialType[], available: boolean}, yPos: number, isSelectionMode: boolean) {
+    // Determine colors and alpha based on availability and mode
+    const bgColor = spell.available ? 0x4a4a4a : 0x2a2a2a;
+    // During selection mode, darken text for unavailable spells; otherwise keep readable
+    const textColor = (isSelectionMode && !spell.available) ? '#666666' : '#ffffff';
+    const descColor = (isSelectionMode && !spell.available) ? '#555555' : '#cccccc';
+    const alpha = spell.available ? 1.0 : (isSelectionMode ? 0.5 : 1.0);
+    
+    // Spell background - updated width to match menu
+    const spellBg = this.add.graphics();
+    spellBg.fillStyle(bgColor);
+    spellBg.fillRoundedRect(650, yPos - 18, 130, 36, 5);
+    if (!spell.available && isSelectionMode) {
+      spellBg.setAlpha(alpha);
+    }
+    
+    // Material cost area - centered on left side with padding
+    const materialAreaX = 658; // 8px padding from left edge (650 + 8)
+    const materialAreaWidth = 24; // Space for materials
+    
+    // Cost materials (colored circles) - stacked vertically on left side
+    if (spell.cost.length > 0) {
+      spell.cost.forEach((materialType, matIndex) => {
+        const circle = this.add.graphics();
+        const color = this.getMaterialColor(materialType);
+        circle.fillStyle(color);
+        
+        // Stack materials vertically in the left area, centered horizontally
+        const materialX = materialAreaX + (materialAreaWidth / 2); // Centered in material area
+        const materialRadius = 5; // Increased from 4 to 5 (25% larger)
+        
+        // Calculate vertical positions - center around yPos for multiple materials
+        const totalHeight = (spell.cost.length - 1) * 10; // 10px spacing between materials
+        const startY = yPos - (totalHeight / 2);
+        const materialY = startY + (matIndex * 10);
+        
+        circle.fillCircle(materialX, materialY, materialRadius);
+        // Darken materials during selection mode if spell is unavailable
+        if (isSelectionMode && !spell.available) {
+          circle.setAlpha(0.4);
+        }
+      });
+    } else {
+      // Gather spell - show a special icon in material area
+      const gatherIcon = this.add.graphics();
+      const iconColor = (isSelectionMode && !spell.available) ? 0x444444 : 0x88ff88;
+      gatherIcon.lineStyle(1.5, iconColor);
+      gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 6, yPos - 3);
+      gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 6, yPos + 3);
+      gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 8, yPos);
+      // Darken icon during selection mode if spell is unavailable
+      if (isSelectionMode && !spell.available) {
+        gatherIcon.setAlpha(0.4);
+      }
+    }
+    
+    // Spell name - positioned to the right of materials
+    const spellNameX = materialAreaX + materialAreaWidth + 4; // 4px gap after material area
+    const spellText = this.add.text(spellNameX, yPos - 8, spell.name, {
+      fontSize: '11px',
+      color: textColor,
+      fontStyle: 'bold'
+    });
+    
+    // Spell description - below the name
+    const description = this.getSpellDescription(spell.name);
+    const descText = this.add.text(spellNameX, yPos + 4, description, {
+      fontSize: '9px',
+      color: descColor
+    });
+  }
+  
+  private getSpellDescription(spellName: string): string {
+    switch(spellName) {
+      case 'Attack': return 'Deal 3 damage';
+      case 'Defend': return 'Block 2 damage';
+      case 'Poison': return 'Poison for 2 turns';
+      case 'Parry': return 'Counter-attack';
+      case 'Gather': return 'Add 4 materials';
+      default: return '';
+    }
+  }
+
   private getMaterialColor(type: MaterialType): number {
     switch(type) {
       case MaterialType.FIRE: return 0xff4444;
