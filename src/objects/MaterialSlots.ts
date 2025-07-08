@@ -6,6 +6,7 @@ export class MaterialSlots extends Phaser.GameObjects.Container {
   private slotWidth: number = 50;
   private slotHeight: number = 50;
   private slotSpacing: number = 60;
+  private thirdSlotUnlocked: boolean = false;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -75,6 +76,38 @@ export class MaterialSlots extends Phaser.GameObjects.Container {
       return this.slots[slotIndex].getBounds();
     }
     return null;
+  }
+  
+  public unlockThirdSlot(): boolean {
+    if (!this.thirdSlotUnlocked) {
+      this.thirdSlotUnlocked = true;
+      this.maxSlots = 3;
+      
+      // Create the third slot
+      const slotX = (2 - (this.maxSlots - 1) / 2) * this.slotSpacing;
+      const slot = new MaterialSlot(this.scene, slotX, 0, 2);
+      this.add(slot);
+      this.slots.push(slot);
+      
+      // Reposition existing slots to center the 3-slot layout
+      this.repositionSlots();
+      
+      console.log('Third material slot unlocked!');
+      return true;
+    }
+    return false;
+  }
+  
+  public isThirdSlotUnlocked(): boolean {
+    return this.thirdSlotUnlocked;
+  }
+  
+  private repositionSlots(): void {
+    // Reposition all slots to center them properly
+    this.slots.forEach((slot, index) => {
+      const slotX = (index - (this.maxSlots - 1) / 2) * this.slotSpacing;
+      slot.setPosition(slotX, 0);
+    });
   }
 }
 

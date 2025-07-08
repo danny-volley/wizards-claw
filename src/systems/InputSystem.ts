@@ -1,6 +1,7 @@
 export class InputSystem {
   private scene: Phaser.Scene;
   private spaceKey: Phaser.Input.Keyboard.Key;
+  private hKey: Phaser.Input.Keyboard.Key;
   private inputBuffer: InputEvent[] = [];
   private bufferTimeMs: number = 100;
   private isInputBlocked: boolean = false;
@@ -10,6 +11,7 @@ export class InputSystem {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.spaceKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.hKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.H);
     this.setupInputHandlers();
   }
   
@@ -24,6 +26,10 @@ export class InputSystem {
       if (!this.isInputBlocked) {
         this.addInputToBuffer('release');
       }
+    });
+    
+    this.hKey.on('down', () => {
+      this.scene.events.emit('toggleHints');
     });
   }
   

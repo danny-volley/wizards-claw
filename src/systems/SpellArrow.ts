@@ -1,3 +1,5 @@
+import { SpellDatabase, SpellRecipe } from './SpellDatabase';
+
 export class SpellArrow extends Phaser.GameObjects.Graphics {
   private isActive: boolean = false;
   private arrowSpeed: number = 0.02; // Similar to crane speed
@@ -6,6 +8,8 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
   private spellMenuY: number = 250; // Starting Y position of spells
   private spellCount: number = 4; // Number of available spells
   private baseX: number; // Store the initial X position
+  private availableSpells: SpellRecipe[] = []; // Store available spells for timing zones
+  private timingZones: Map<number, { centerY: number, zoneSize: number }> = new Map();
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -36,6 +40,7 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
     
     // Recreate the arrow graphics to ensure they exist
     this.createArrow();
+    this.createTimingZones();
     
     this.setVisible(true);
     // Ensure arrow is brought to front
@@ -82,21 +87,35 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
   public getCurrentSpellIndex(): number {
     if (!this.isActive) return -1;
     
-    // Calculate which spell the arrow is pointing to based on the new positioning
-    const relativeY = this.y - this.spellMenuY;
-    const spellSpacing = 45;
-    const buffer = 30;
+    // Check timing zones for precise spell selection
+    const currentY = this.y;
     
-    // Check if arrow is in buffer zones (return -1 if in buffer)
-    if (relativeY < 0 || relativeY > (this.spellCount - 1) * spellSpacing) {
-      return -1; // Arrow is in buffer zone, no spell selected
+    for (const [spellIndex, zone] of this.timingZones.entries()) {
+      const distance = Math.abs(currentY - zone.centerY);
+      if (distance <= zone.zoneSize / 2) {
+        return spellIndex;
+      }
     }
     
-    // Calculate which spell the arrow is over
-    const spellIndex = Math.round(relativeY / spellSpacing);
+    return -1; // Arrow is not in any timing zone
+  }
+  
+  public getTimingAccuracy(): number {
+    if (!this.isActive) return 0;
     
-    // Clamp to valid range
-    return Math.max(0, Math.min(this.spellCount - 1, spellIndex));
+    const currentY = this.y;
+    let bestAccuracy = 0;
+    
+    for (const [spellIndex, zone] of this.timingZones.entries()) {
+      const distance = Math.abs(currentY - zone.centerY);
+      if (distance <= zone.zoneSize / 2) {
+        // Calculate accuracy as percentage (1.0 = perfect center, 0.0 = edge of zone)
+        const accuracy = 1.0 - (distance / (zone.zoneSize / 2));
+        bestAccuracy = Math.max(bestAccuracy, accuracy);
+      }
+    }
+    
+    return bestAccuracy;
   }
   
   public setSpellCount(count: number) {
@@ -106,6 +125,26 @@ export class SpellArrow extends Phaser.GameObjects.Graphics {
   public setSpellMenuBounds(startY: number, height: number) {
     this.spellMenuY = startY;
     this.spellMenuHeight = height;
+  }
+  
+  public setAvailableSpells(spells: SpellRecipe[]) {
+    this.availableSpells = spells;
+    this.spellCount = spells.length;
+  }
+  
+  private createTimingZones() {
+    this.timingZones.clear();
+    
+    // Create timing zones based on spell difficulty
+    this.availableSpells.forEach((spell, index) => {
+      const spellCenterY = this.spellMenuY + (index * 45);
+      const zoneSize = SpellDatabase.getTimingWindowSize(spell.difficulty);
+      
+      this.timingZones.set(index, {
+        centerY: spellCenterY,
+        zoneSize: zoneSize
+      });
+    });
   }
   
   public isSelectionActive(): boolean {

@@ -5,6 +5,9 @@ import { MaterialSlots } from '../objects/MaterialSlots';
 import { Crane } from '../objects/Crane';
 import { Material, MaterialType } from '../objects/Material';
 import { SpellArrow } from '../systems/SpellArrow';
+import { SpellDatabase, SpellRecipe } from '../systems/SpellDatabase';
+import { SpellEffectsSystem } from '../systems/SpellEffectsSystem';
+import { RecipeHintSystem } from '../systems/RecipeHintSystem';
 
 export class GameScene extends Phaser.Scene {
   private inputSystem!: InputSystem;
@@ -15,10 +18,12 @@ export class GameScene extends Phaser.Scene {
   private gameState: 'selecting' | 'casting' | 'processing' = 'selecting';
   private materialsGroup!: Phaser.Physics.Arcade.Group;
   private spellModeText: Phaser.GameObjects.Text | null = null;
-  private availableSpells: string[] = [];
+  private availableSpells: SpellRecipe[] = [];
   private globalSettleTimer: number = 0;
   private materialsAreFrozen: boolean = false;
   private lastMaterialDropTime: number = 0;
+  private spellEffectsSystem!: SpellEffectsSystem;
+  private recipeHintSystem!: RecipeHintSystem;
   
   constructor() {
     super({ key: 'GameScene' });
@@ -32,6 +37,10 @@ export class GameScene extends Phaser.Scene {
     console.log('GameScene create() started');
     
     try {
+      // Initialize spell database
+      SpellDatabase.initialize();
+      console.log('SpellDatabase initialized');
+      
       // Set world bounds
       this.physics.world.setBounds(0, 0, 800, 600);
       console.log('World bounds set');
@@ -43,6 +52,14 @@ export class GameScene extends Phaser.Scene {
       // Initialize input system
       this.inputSystem = new InputSystem(this);
       console.log('Input system created');
+      
+      // Initialize spell effects system
+      this.spellEffectsSystem = new SpellEffectsSystem(this);
+      console.log('Spell effects system created');
+      
+      // Initialize recipe hint system
+      this.recipeHintSystem = new RecipeHintSystem(this);
+      console.log('Recipe hint system created');
       
       // Create main game areas based on mockup layout
       this.createGameLayout();
@@ -60,9 +77,14 @@ export class GameScene extends Phaser.Scene {
       this.gameState = 'selecting';
       
       // Add instructions
-      this.add.text(400, 550, 'Press SPACEBAR to operate the crane', {
+      this.add.text(400, 540, 'Press SPACEBAR to operate the crane', {
         fontSize: '16px',
         color: '#cccccc'
+      }).setOrigin(0.5);
+      
+      this.add.text(400, 560, 'Press H to toggle recipe hints', {
+        fontSize: '14px',
+        color: '#aaaaaa'
       }).setOrigin(0.5);
       
       console.log('GameScene create() completed successfully');
@@ -120,12 +142,8 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createSpellMenu() {
-    // Spell menu background - widened to accommodate descriptions
-    const menuBg = this.add.graphics();
-    menuBg.fillStyle(0x3a3a3a);
-    menuBg.fillRoundedRect(640, 200, 150, 300, 10);
-    menuBg.lineStyle(2, 0x555555);
-    menuBg.strokeRoundedRect(640, 200, 150, 300, 10);
+    // Spell menu background will be created dynamically in updateAvailableSpells
+    // to match the number of spells
     
     // Update available spells based on current materials
     this.updateAvailableSpells();
@@ -135,24 +153,25 @@ export class GameScene extends Phaser.Scene {
     // Get current materials in slots
     const materials = this.materialSlots.getFilledMaterials().map(m => m.materialType);
     
-    // Always show all spells, but determine which are available
-    const allSpells = [
-      { name: 'Attack', cost: [MaterialType.FIRE], available: materials.includes(MaterialType.FIRE) },
-      { name: 'Defend', cost: [MaterialType.LEAF], available: materials.includes(MaterialType.LEAF) },
-      { name: 'Poison', cost: [MaterialType.ROCK], available: materials.includes(MaterialType.ROCK) },
-      { name: 'Parry', cost: [MaterialType.FIRE, MaterialType.LEAF], available: materials.includes(MaterialType.FIRE) && materials.includes(MaterialType.LEAF) },
-      { name: 'Gather', cost: [], available: true } // Always available
-    ];
-    
     if (this.gameState === 'selecting') {
-      // During material selection: show all spells with costs
-      this.drawAllSpells(allSpells);
+      // During material selection: show all discovered spells with costs
+      const allDiscoveredSpells = SpellDatabase.getDiscoveredRecipes();
+      this.drawAllSpells(allDiscoveredSpells, materials);
     } else {
-      // During spell selection: separate available/unavailable
-      const availableSpells = allSpells.filter(spell => spell.available);
-      const unavailableSpells = allSpells.filter(spell => !spell.available);
-      this.availableSpells = availableSpells.map(spell => spell.name);
+      // During spell selection: get available spells for casting
+      const availableSpells = SpellDatabase.getAvailableSpells(materials);
+      const allDiscoveredSpells = SpellDatabase.getDiscoveredRecipes();
+      const unavailableSpells = allDiscoveredSpells.filter(spell => 
+        !availableSpells.some(available => available.id === spell.id)
+      );
+      
+      this.availableSpells = availableSpells;
       this.drawSpellSelection(availableSpells, unavailableSpells);
+      
+      // Update spell arrow with available spells for timing zones
+      if (this.spellArrow) {
+        this.spellArrow.setAvailableSpells(availableSpells);
+      }
     }
   }
   
@@ -166,52 +185,93 @@ export class GameScene extends Phaser.Scene {
     });
   }
   
-  private drawAllSpells(spells: Array<{name: string, cost: MaterialType[], available: boolean}>) {
+  private createDynamicSpellMenu(spellCount: number): number {
+    // Calculate dynamic height based on number of spells
+    const spellSpacing = 45;
+    const topPadding = 40; // Space for any header
+    const bottomPadding = 20;
+    const menuHeight = topPadding + (spellCount * spellSpacing) + bottomPadding;
+    
+    // Ensure menu fits on screen (max height based on screen size)
+    const maxHeight = 400; // Leave space for other UI elements
+    const finalHeight = Math.min(menuHeight, maxHeight);
+    
+    // Adjust starting Y position if menu is too tall
+    const menuStartY = 200;
+    const menuEndY = menuStartY + finalHeight;
+    const screenHeight = 600; // Game height
+    
+    let adjustedStartY = menuStartY;
+    if (menuEndY > screenHeight - 50) { // 50px margin from bottom
+      adjustedStartY = screenHeight - finalHeight - 50;
+    }
+    
+    // Create spell menu background
+    const menuBg = this.add.graphics();
+    menuBg.fillStyle(0x3a3a3a);
+    menuBg.fillRoundedRect(640, adjustedStartY, 150, finalHeight, 10);
+    menuBg.lineStyle(2, 0x555555);
+    menuBg.strokeRoundedRect(640, adjustedStartY, 150, finalHeight, 10);
+    
+    // Return the first spell Y position (menu start + top padding)
+    return adjustedStartY + 30; // 30px from top of menu to first spell
+  }
+  
+  private drawAllSpells(spells: SpellRecipe[], materials: MaterialType[]) {
     this.clearSpellDisplay();
     
+    // Create dynamic spell menu background and get start Y position
+    const startY = this.createDynamicSpellMenu(spells.length);
+    
     spells.forEach((spell, index) => {
-      const yPos = 250 + (index * 45); // 45px spacing
-      this.drawSpellItem(spell, yPos, false); // false = not selection mode
+      const yPos = startY + (index * 45); // 45px spacing from dynamic start
+      const available = SpellDatabase.canCastSpell(spell.materials, materials);
+      this.drawSpellItem(spell, yPos, false, available); // false = not selection mode
     });
   }
   
-  private drawSpellSelection(availableSpells: Array<{name: string, cost: MaterialType[], available: boolean}>, unavailableSpells: Array<{name: string, cost: MaterialType[], available: boolean}>) {
+  private drawSpellSelection(availableSpells: SpellRecipe[], unavailableSpells: SpellRecipe[]) {
     this.clearSpellDisplay();
     
-    let yPos = 250;
+    const totalSpells = availableSpells.length + unavailableSpells.length;
+    
+    // Create dynamic spell menu background and get start Y position
+    const startY = this.createDynamicSpellMenu(totalSpells);
+    
+    let yPos = startY;
     
     // Draw available spells first
     availableSpells.forEach((spell, index) => {
-      this.drawSpellItem(spell, yPos, true); // true = selection mode
+      this.drawSpellItem(spell, yPos, true, true); // true = selection mode, true = available
       yPos += 45;
     });
     
     // Draw unavailable spells at bottom (darkened)
     unavailableSpells.forEach((spell, index) => {
-      this.drawSpellItem(spell, yPos, true); // true = selection mode
+      this.drawSpellItem(spell, yPos, true, false); // true = selection mode, false = unavailable
       yPos += 45;
     });
     
     // Update spell arrow bounds (only for available spells)
     if (this.spellArrow) {
       this.spellArrow.setSpellCount(availableSpells.length);
-      this.spellArrow.setSpellMenuBounds(250, availableSpells.length * 45);
+      this.spellArrow.setSpellMenuBounds(startY, availableSpells.length * 45);
     }
   }
   
-  private drawSpellItem(spell: {name: string, cost: MaterialType[], available: boolean}, yPos: number, isSelectionMode: boolean) {
+  private drawSpellItem(spell: SpellRecipe, yPos: number, isSelectionMode: boolean, available: boolean) {
     // Determine colors and alpha based on availability and mode
-    const bgColor = spell.available ? 0x4a4a4a : 0x2a2a2a;
+    const bgColor = available ? 0x4a4a4a : 0x2a2a2a;
     // During selection mode, darken text for unavailable spells; otherwise keep readable
-    const textColor = (isSelectionMode && !spell.available) ? '#666666' : '#ffffff';
-    const descColor = (isSelectionMode && !spell.available) ? '#555555' : '#cccccc';
-    const alpha = spell.available ? 1.0 : (isSelectionMode ? 0.5 : 1.0);
+    const textColor = (isSelectionMode && !available) ? '#666666' : '#ffffff';
+    const descColor = (isSelectionMode && !available) ? '#555555' : '#cccccc';
+    const alpha = available ? 1.0 : (isSelectionMode ? 0.5 : 1.0);
     
     // Spell background - updated width to match menu
     const spellBg = this.add.graphics();
     spellBg.fillStyle(bgColor);
     spellBg.fillRoundedRect(650, yPos - 18, 130, 36, 5);
-    if (!spell.available && isSelectionMode) {
+    if (!available && isSelectionMode) {
       spellBg.setAlpha(alpha);
     }
     
@@ -220,8 +280,8 @@ export class GameScene extends Phaser.Scene {
     const materialAreaWidth = 24; // Space for materials
     
     // Cost materials with colorblind-friendly shapes - stacked vertically on left side
-    if (spell.cost.length > 0) {
-      spell.cost.forEach((materialType, matIndex) => {
+    if (spell.materials.length > 0) {
+      spell.materials.forEach((materialType, matIndex) => {
         const materialIcon = this.add.graphics();
         const color = this.getMaterialColor(materialType);
         
@@ -230,7 +290,7 @@ export class GameScene extends Phaser.Scene {
         const materialRadius = 5;
         
         // Calculate vertical positions - center around yPos for multiple materials
-        const totalHeight = (spell.cost.length - 1) * 10; // 10px spacing between materials
+        const totalHeight = (spell.materials.length - 1) * 10; // 10px spacing between materials
         const startY = yPos - (totalHeight / 2);
         const materialY = startY + (matIndex * 10);
         
@@ -276,20 +336,20 @@ export class GameScene extends Phaser.Scene {
         }
         
         // Darken materials during selection mode if spell is unavailable
-        if (isSelectionMode && !spell.available) {
+        if (isSelectionMode && !available) {
           materialIcon.setAlpha(0.4);
         }
       });
     } else {
       // Gather spell - show a special icon in material area
       const gatherIcon = this.add.graphics();
-      const iconColor = (isSelectionMode && !spell.available) ? 0x444444 : 0x88ff88;
+      const iconColor = (isSelectionMode && !available) ? 0x444444 : 0x88ff88;
       gatherIcon.lineStyle(1.5, iconColor);
       gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 6, yPos - 3);
       gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 6, yPos + 3);
       gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 8, yPos);
       // Darken icon during selection mode if spell is unavailable
-      if (isSelectionMode && !spell.available) {
+      if (isSelectionMode && !available) {
         gatherIcon.setAlpha(0.4);
       }
     }
@@ -303,23 +363,12 @@ export class GameScene extends Phaser.Scene {
     });
     
     // Spell description - below the name
-    const description = this.getSpellDescription(spell.name);
-    const descText = this.add.text(spellNameX, yPos + 4, description, {
+    const descText = this.add.text(spellNameX, yPos + 4, spell.effect.description, {
       fontSize: '9px',
       color: descColor
     });
   }
   
-  private getSpellDescription(spellName: string): string {
-    switch(spellName) {
-      case 'Attack': return 'Deal 3 damage';
-      case 'Defend': return 'Block 2 damage';
-      case 'Poison': return 'Poison for 2 turns';
-      case 'Parry': return 'Counter-attack';
-      case 'Gather': return 'Add 4 materials';
-      default: return '';
-    }
-  }
 
   private getMaterialColor(type: MaterialType): number {
     switch(type) {
@@ -434,6 +483,17 @@ export class GameScene extends Phaser.Scene {
       // Re-enable physics for all materials when new ones are added
       this.reenableAllPhysics();
     });
+    
+    // Handle third slot unlock
+    this.events.on('unlockThirdSlot', () => {
+      this.handleThirdSlotUnlock();
+    });
+    
+    // Handle hint toggle
+    this.events.on('toggleHints', () => {
+      const currentMaterials = this.materialSlots.getFilledMaterials().map(m => m.materialType);
+      this.recipeHintSystem.toggleHints(currentMaterials);
+    });
   }
   
   private handleMaterialGrabbed(material: Material) {
@@ -455,23 +515,34 @@ export class GameScene extends Phaser.Scene {
     console.log('Slots filled count:', this.materialSlots.getFilledCount());
     console.log('Is full:', this.materialSlots.isFull());
     
-    if (added && this.materialSlots.isFull() && this.gameState === 'selecting') {
-      // Both slots filled, switch to casting state
-      console.log('SWITCHING TO SPELL SELECTION MODE');
-      this.gameState = 'casting';
-      this.crane.stopSwinging();
-      
-      // Update available spells and start spell selection
-      this.updateAvailableSpells();
-      console.log('Starting spell selection arrow');
-      this.spellArrow.startSelection();
-      
-      // Add visual indicator (only once)
-      if (!this.spellModeText) {
-        this.spellModeText = this.add.text(400, 100, 'SPELL SELECTION - Press SPACEBAR', {
-          fontSize: '16px',
-          color: '#ffff00'
-        }).setOrigin(0.5);
+    // Check if slots are full for spell casting (minimum 2 slots, maximum available slots)
+    const minSlotsForCasting = 2;
+    const filledCount = this.materialSlots.getFilledCount();
+    
+    if (added && filledCount >= minSlotsForCasting && this.gameState === 'selecting') {
+      // Check if user wants to continue adding materials or cast spell
+      if (this.materialSlots.isThirdSlotUnlocked() && filledCount < 3) {
+        // Third slot is unlocked but not full - show option to continue or cast
+        console.log(`${filledCount} slots filled. You can add more materials or cast a spell.`);
+        // For now, continue to material gathering - could add UI choice later
+      } else if (this.materialSlots.isFull()) {
+        // All available slots filled, switch to casting state
+        console.log('SWITCHING TO SPELL SELECTION MODE - All slots filled');
+        this.gameState = 'casting';
+        this.crane.stopSwinging();
+        
+        // Update available spells and start spell selection
+        this.updateAvailableSpells();
+        console.log('Starting spell selection arrow');
+        this.spellArrow.startSelection();
+        
+        // Add visual indicator (only once)
+        if (!this.spellModeText) {
+          this.spellModeText = this.add.text(400, 100, 'SPELL SELECTION - Press SPACEBAR', {
+            fontSize: '16px',
+            color: '#ffff00'
+          }).setOrigin(0.5);
+        }
       }
     }
   }
@@ -483,8 +554,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
-  private handleSpellSelection(spellName: string) {
-    console.log(`Selected spell: ${spellName}`);
+  private handleSpellSelection(spellName: string, timingAccuracy: number = 1.0) {
+    console.log(`Selected spell: ${spellName} with ${(timingAccuracy * 100).toFixed(1)}% accuracy`);
     
     // Stop spell selection
     console.log('Stopping spell selection arrow');
@@ -498,6 +569,22 @@ export class GameScene extends Phaser.Scene {
     
     // Get materials from slots before clearing them
     const usedMaterials = this.materialSlots.getFilledMaterials();
+    
+    // Find the spell recipe for effects
+    const spellRecipe = SpellDatabase.getDiscoveredRecipes().find(recipe => recipe.name === spellName);
+    
+    if (spellRecipe) {
+      // Cast the spell with effects
+      const castResult = this.spellEffectsSystem.castSpell(spellRecipe, timingAccuracy);
+      console.log(castResult.message);
+      
+      // Show effects summary
+      if (castResult.effects.length > 0) {
+        castResult.effects.forEach(effect => {
+          console.log(`Active effect: ${effect.name} for ${effect.remainingTurns} turns`);
+        });
+      }
+    }
     
     // Destroy the used materials (make them disappear)
     usedMaterials.forEach(material => {
@@ -521,6 +608,8 @@ export class GameScene extends Phaser.Scene {
       this.reenableAllPhysics(); // Re-enable physics (this will restart the timer)
       this.materialBag.addGatherMaterials(4);
     }
+    
+    // Note: Spell discovery happens in shop, not during combat
   }
   
 
@@ -567,8 +656,12 @@ export class GameScene extends Phaser.Scene {
       const selectedSpellIndex = this.spellArrow.getCurrentSpellIndex();
       if (selectedSpellIndex >= 0 && selectedSpellIndex < this.availableSpells.length) {
         const selectedSpell = this.availableSpells[selectedSpellIndex];
-        console.log('Selected spell:', selectedSpell);
-        this.handleSpellSelection(selectedSpell);
+        const timingAccuracy = this.spellArrow.getTimingAccuracy();
+        
+        console.log('Selected spell:', selectedSpell.name);
+        console.log('Timing accuracy:', timingAccuracy.toFixed(2));
+        
+        this.handleSpellSelection(selectedSpell.name, timingAccuracy);
       }
     }
   }
@@ -603,5 +696,59 @@ export class GameScene extends Phaser.Scene {
         }
       }
     });
+  }
+  
+  
+  private handleThirdSlotUnlock() {
+    const unlocked = this.materialSlots.unlockThirdSlot();
+    
+    if (unlocked) {
+      // Show unlock notification
+      const notification = this.add.container(400, 200);
+      
+      // Background
+      const notificationBg = this.add.graphics();
+      notificationBg.fillStyle(0x000000, 0.8);
+      notificationBg.fillRoundedRect(-150, -40, 300, 80, 10);
+      notificationBg.lineStyle(3, 0x00ff00);
+      notificationBg.strokeRoundedRect(-150, -40, 300, 80, 10);
+      notification.add(notificationBg);
+      
+      // Title
+      const titleText = this.add.text(0, -15, 'THIRD SLOT UNLOCKED!', {
+        fontSize: '16px',
+        color: '#00ff00',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+      notification.add(titleText);
+      
+      // Description
+      const descText = this.add.text(0, 10, 'You can now use 3 materials for powerful spells!', {
+        fontSize: '12px',
+        color: '#cccccc'
+      }).setOrigin(0.5);
+      notification.add(descText);
+      
+      // Animate notification
+      notification.setScale(0);
+      this.tweens.add({
+        targets: notification,
+        scale: 1,
+        duration: 400,
+        ease: 'Back.easeOut'
+      });
+      
+      // Auto-hide after 4 seconds
+      this.time.delayedCall(4000, () => {
+        this.tweens.add({
+          targets: notification,
+          scale: 0,
+          alpha: 0,
+          duration: 300,
+          ease: 'Power2.easeIn',
+          onComplete: () => notification.destroy()
+        });
+      });
+    }
   }
 }
