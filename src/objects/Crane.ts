@@ -4,6 +4,8 @@ export class Crane extends Phaser.GameObjects.Container {
   private arm: Phaser.GameObjects.Graphics;
   private claw: Phaser.GameObjects.Graphics;
   private cable: Phaser.GameObjects.Graphics;
+  private clawImage: Phaser.GameObjects.Image;
+  private debugGraphics: Phaser.GameObjects.Graphics;
   
   private armLength: number = 100;
   private swingSpeed: number = 0.02;
@@ -16,7 +18,7 @@ export class Crane extends Phaser.GameObjects.Container {
   private isAscending: boolean = false;
   private descentSpeed: number = 150;
   private cableLength: number = 20;
-  private maxCableLength: number = 180;
+  private maxCableLength: number = 400; // Increased to allow reaching bag bottom
   private bagBottomY: number = 0;
   
   private grabbedMaterial: Material | null = null;
@@ -36,19 +38,30 @@ export class Crane extends Phaser.GameObjects.Container {
   }
   
   private createCraneVisual() {
-    // Create arm (horizontal bar)
+    // Create arm (horizontal bar) - hidden
     this.arm = this.scene.add.graphics();
-    this.arm.lineStyle(4, 0x666666);
-    this.arm.lineBetween(-this.swingRange, 0, this.swingRange, 0);
+    this.arm.setVisible(false);
     this.add(this.arm);
     
-    // Create cable
+    // Create cable - hidden
     this.cable = this.scene.add.graphics();
+    this.cable.setVisible(false);
     this.add(this.cable);
     
-    // Create claw
+    // Create placeholder claw (for alignment) - hidden
     this.claw = this.scene.add.graphics();
+    this.claw.setVisible(false);
     this.add(this.claw);
+    
+    // Create claw image
+    this.clawImage = this.scene.add.image(0, 0, 'claw');
+    this.clawImage.setOrigin(0.5, 0.5); // Center the image
+    this.clawImage.setScale(0.3); // 50% bigger than 0.2 (was 0.2, now 0.3)
+    this.add(this.clawImage);
+    
+    // Create debug graphics for collision visualization
+    this.debugGraphics = this.scene.add.graphics();
+    this.add(this.debugGraphics);
     
     this.updateCranePosition();
   }
@@ -57,29 +70,41 @@ export class Crane extends Phaser.GameObjects.Container {
     // Calculate current position along the arm
     const armPosition = Math.sin(this.currentSwingAngle) * this.swingRange;
     
-    // Update cable
+    // Update cable (hidden but still needed for calculations)
     this.cable.clear();
-    this.cable.lineStyle(2, 0x444444);
-    this.cable.lineBetween(armPosition, 0, armPosition, this.cableLength);
     
-    // Update claw
+    // Update placeholder claw (hidden but still needed for calculations)
     this.claw.clear();
     this.claw.setPosition(armPosition, this.cableLength);
     
-    if (this.clawOpen) {
-      // Open claw
-      this.claw.lineStyle(3, 0x888888);
-      this.claw.lineBetween(-8, 0, -3, 8);
-      this.claw.lineBetween(8, 0, 3, 8);
-      this.claw.lineBetween(-3, 8, 3, 8);
-    } else {
-      // Closed claw
-      this.claw.lineStyle(3, 0x888888);
-      this.claw.lineBetween(-5, 0, 0, 8);
-      this.claw.lineBetween(5, 0, 0, 8);
-      this.claw.fillStyle(0x666666);
-      this.claw.fillCircle(0, 8, 3);
-    }
+    // Update claw image position
+    // The collision point in the asset is at x:460 y:980
+    // We need to offset the image so this point aligns with where the arrow tip was (armPosition, cableLength)
+    const collisionOffsetX = -460 * this.clawImage.scaleX; // Offset to align collision point horizontally
+    const collisionOffsetY = -980 * this.clawImage.scaleY; // Offset to align collision point vertically
+    
+    // MANUAL ADJUSTMENT VALUES - modify these to fine-tune positioning:
+    const manualAdjustX = 155; // Positive moves right, negative moves left
+    const manualAdjustY = 160; // Positive moves down, negative moves up
+    
+    // Position the image so that the collision point (460, 980) aligns with the arrow tip
+    this.clawImage.setPosition(
+      armPosition + collisionOffsetX + manualAdjustX, 
+      this.cableLength + collisionOffsetY + manualAdjustY
+    );
+    
+    // Show/hide claw image based on game state
+    const gameScene = this.scene as any;
+    const isSelectingMaterials = gameScene.gameState === 'selecting';
+    this.clawImage.setVisible(isSelectingMaterials);
+    
+    // Update debug visualization
+    this.updateDebugVisualization();
+  }
+  
+  private updateDebugVisualization() {
+    this.debugGraphics.clear();
+    // Debug visualization removed
   }
   
   private startSwinging() {
@@ -127,15 +152,30 @@ export class Crane extends Phaser.GameObjects.Container {
     this.clawOpen = true;
     
     // Calculate how far to descend (to bottom of bag)
-    const targetCableLength = this.bagBottomY - this.y + 10;
+    // Get the actual bag bounds from the MaterialBag
+    const gameScene = this.scene as any;
+    const materialBag = gameScene.materialBag;
+    const bagBounds = materialBag.getBounds();
+    const bagBottom = bagBounds.y + bagBounds.height - 10; // 10px margin from bottom
+    
+    const targetCableLength = bagBottom - this.y;
     const clampedLength = Math.min(targetCableLength, this.maxCableLength);
     
-    // Animate cable extension to bag bottom (faster descent)
+    // Debug: Show descent calculations
+    console.log('Crane descent debug:');
+    console.log('  Crane Y position:', this.y);
+    console.log('  Bag bounds:', bagBounds);
+    console.log('  Bag bottom calculated:', bagBottom);
+    console.log('  Target cable length:', targetCableLength);
+    console.log('  Max cable length:', this.maxCableLength);
+    console.log('  Clamped length (final):', clampedLength);
+    
+    // Animate cable extension to bag bottom with subtle natural movement
     this.scene.tweens.add({
       targets: this,
       cableLength: clampedLength,
-      duration: 600, // Half the previous duration for 2x speed
-      ease: 'Power2.easeOut',
+      duration: 1200, // Slower for more controlled movement
+      ease: 'Back.easeOut', // Gentle overshoot (up slightly, then down)
       onUpdate: () => {
         this.updateCranePosition();
         this.checkForMaterialCollisionDuringDescent();
@@ -152,7 +192,7 @@ export class Crane extends Phaser.GameObjects.Container {
     if (!this.isDescending) return;
     
     const clawWorldPos = this.getClawWorldPosition();
-    const contactRadius = 15; // Only stop when actually touching a material (slightly larger than material radius)
+    const contactRadius = 28; // Increased to better match material size and prevent passing through
     
     // Get all materials in the scene
     const materials = this.scene.children.list.filter(child => 
@@ -178,7 +218,7 @@ export class Crane extends Phaser.GameObjects.Container {
     if (!this.isDescending) return;
     
     const clawWorldPos = this.getClawWorldPosition();
-    const grabRadius = 16; // Just slightly larger than material radius for precise grabbing
+    const grabRadius = 29; // Increased to match contact radius for better collision detection
     
     // Get all materials in the scene
     const materials = this.scene.children.list.filter(child => 
@@ -203,9 +243,14 @@ export class Crane extends Phaser.GameObjects.Container {
     
     if (closestMaterial) {
       this.grabMaterial(closestMaterial);
+      // Pause briefly after grabbing, then ascend
+      this.scene.time.delayedCall(150, () => {
+        this.startAscent();
+      });
+    } else {
+      // No material found, ascend immediately (faster)
+      this.startAscent();
     }
-    
-    this.startAscent();
   }
   
   private grabMaterial(material: Material) {
@@ -235,12 +280,16 @@ export class Crane extends Phaser.GameObjects.Container {
     this.isDescending = false;
     this.isAscending = true;
     
-    // Animate cable retraction
+    // Determine ascent speed based on whether we grabbed something
+    const hasGrabbedMaterial = this.grabbedMaterial !== null;
+    const ascentDuration = hasGrabbedMaterial ? 1000 : 600; // Faster when empty
+    
+    // Animate cable retraction with subtle natural movement
     this.scene.tweens.add({
       targets: this,
       cableLength: 20,
-      duration: 800,
-      ease: 'Power2.easeIn',
+      duration: ascentDuration,
+      ease: 'Back.easeOut', // Gentle overshoot (down slightly, then up)
       onUpdate: () => {
         this.updateCranePosition();
         

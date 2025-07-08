@@ -114,16 +114,11 @@ export class GameScene extends Phaser.Scene {
       // Initial game state
       this.gameState = 'selecting';
       
-      // Add instructions - positioned for 1280x720
-      this.add.text(640, 650, 'Press SPACEBAR to operate the crane', {
-        fontSize: '20px',
-        color: '#cccccc'
-      }).setOrigin(0.5);
-      
-      this.add.text(640, 680, 'Press H to toggle recipe hints', {
+      // Add instructions - positioned in right bottom corner
+      this.add.text(1250, 690, 'Spacebar to choose', {
         fontSize: '16px',
-        color: '#aaaaaa'
-      }).setOrigin(0.5);
+        color: '#cccccc'
+      }).setOrigin(1, 1); // Right-aligned to bottom-right corner
       
       console.log('GameScene create() completed successfully');
       
@@ -141,7 +136,7 @@ export class GameScene extends Phaser.Scene {
     // Based on 1280x720 layout with new UI positioning
     
     // Create material bag using UIManager (center area, slightly below center)
-    this.uiManager.createMaterialBag(640, 400);
+    this.uiManager.createMaterialBag(640, 464); // Moved down 64px
     
     // Create material slots using UIManager (top of screen with padding)
     const topPadding = 60; // Padding from top of screen
@@ -163,9 +158,9 @@ export class GameScene extends Phaser.Scene {
     this.uiManager.createCharacterArea(200, 360);
     
     // Initialize existing systems with new positions
-    this.materialBag = new MaterialBag(this, 640, 400);
-    const bagBottomY = 400 + 185; // bag Y + half bag height (now 185 for larger bag)
-    this.crane = new Crane(this, 640, 200, bagBottomY); // Moved even higher up
+    this.materialBag = new MaterialBag(this, 640, 464); // Moved down 64px
+    const bagBottomY = 464 + 185; // bag Y + half bag height (now 185 for larger bag)
+    this.crane = new Crane(this, 640, 264, bagBottomY); // Moved down 64px
     
     // Create spell selection system (positioned with spell window)
     this.spellArrow = new SpellArrow(this, this.spellWindowX, 360);
@@ -646,13 +641,7 @@ export class GameScene extends Phaser.Scene {
         console.log('Starting spell selection arrow');
         this.spellArrow.startSelection();
         
-        // Add visual indicator (only once)
-        if (!this.spellModeText) {
-          this.spellModeText = this.add.text(400, 100, 'SPELL SELECTION - Press SPACEBAR', {
-            fontSize: '16px',
-            color: '#ffff00'
-          }).setOrigin(0.5);
-        }
+        // Visual indicator removed - no longer needed
       }
     }
   }
@@ -671,11 +660,7 @@ export class GameScene extends Phaser.Scene {
     console.log('Stopping spell selection arrow');
     this.spellArrow.stopSelection();
     
-    // Clear visual indicator
-    if (this.spellModeText) {
-      this.spellModeText.destroy();
-      this.spellModeText = null;
-    }
+    // Visual indicator cleanup removed - no longer needed
     
     // Get materials from slots before clearing them
     const usedMaterials = this.materialSlots.getFilledMaterials();
