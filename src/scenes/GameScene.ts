@@ -126,6 +126,12 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5);
       
       console.log('GameScene create() completed successfully');
+      
+      // Initialize the brute force timer for materials that were created during setup
+      this.lastMaterialDropTime = this.time.now;
+      this.materialsAreFrozen = false;
+      console.log('BRUTE FORCE: Initial materials loaded - starting 3-second timer');
+      
     } catch (error) {
       console.error('Error in GameScene create():', error);
     }
@@ -509,10 +515,10 @@ export class GameScene extends Phaser.Scene {
     const deltaY = material1.y - material2.y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    if (distance > 0 && distance < 30) { // Updated for 14 radius materials (28 diameter + 2px buffer)
+    if (distance > 0 && distance < 60) { // Updated for 30 radius materials (60 diameter)
       const normalX = deltaX / distance;
       const normalY = deltaY / distance;
-      const overlap = 30 - distance;
+      const overlap = 60 - distance;
       
       // Apply separation force scaled by overlap
       const separationForce = overlap * 3;
@@ -556,11 +562,14 @@ export class GameScene extends Phaser.Scene {
   }
   
   private reenableAllPhysics() {
-    // Re-enable physics for all materials
+    // Unfreeze materials and re-enable physics for all materials
+    this.materialsAreFrozen = false;
+    console.log('BRUTE FORCE: Unfreezing materials and re-enabling physics');
+    
     this.materialsGroup.children.entries.forEach((material) => {
       const sprite = material as Phaser.Physics.Arcade.Sprite;
       const body = sprite.body as Phaser.Physics.Arcade.Body;
-      if (!body.enable) {
+      if (body && !body.enable) {
         body.setEnable(true);
       }
       this.wakeObject(sprite);
@@ -583,8 +592,8 @@ export class GameScene extends Phaser.Scene {
     
     // Handle material dropped
     this.events.on('materialDropped', () => {
+      console.log('BRUTE FORCE: Material dropped - starting 3-second timer');
       this.lastMaterialDropTime = this.time.now;
-      this.materialsAreFrozen = false;
       // Re-enable physics for all materials when new ones are added
       this.reenableAllPhysics();
     });
@@ -603,10 +612,6 @@ export class GameScene extends Phaser.Scene {
   
   private handleMaterialGrabbed(material: Material) {
     console.log('Material grabbed:', material.materialType);
-    
-    // Unfreeze materials when crane picks something up
-    this.materialsAreFrozen = false;
-    console.log('Materials unfrozen - physics resumed');
     
     // Re-enable physics for all materials and wake them (this will restart the timer)
     this.reenableAllPhysics();
@@ -708,9 +713,8 @@ export class GameScene extends Phaser.Scene {
     
     // Handle Gather action
     if (spellName === 'Gather') {
-      // Unfreeze materials when new ones are added
-      this.materialsAreFrozen = false;
-      this.reenableAllPhysics(); // Re-enable physics (this will restart the timer)
+      // Re-enable physics when new materials are added (this will restart the timer)
+      this.reenableAllPhysics();
       this.materialBag.addGatherMaterials(4);
     }
     
@@ -734,14 +738,25 @@ export class GameScene extends Phaser.Scene {
     // Apply settling physics to materials (simple sleep system)
     this.updateMaterialSettling();
     
-    // Global settle timer - freeze all materials after last drop
+    // Global settle timer - freeze all materials 3 seconds after dropping starts
     if (!this.materialsAreFrozen && this.lastMaterialDropTime > 0) {
       const timeSinceLastDrop = this.time.now - this.lastMaterialDropTime;
       
-      // Only freeze if crane is not active and enough time has passed
-      if (timeSinceLastDrop > 3000 && !this.crane.isActive()) { // 3 seconds
+      
+      // Freeze materials exactly 3 seconds after dropping starts, regardless of crane state
+      if (timeSinceLastDrop >= 3000) { // 3 seconds
         this.materialsAreFrozen = true;
-        console.log('Materials frozen - all physics stopped');
+        console.log('BRUTE FORCE: Materials physics DISABLED after 3 seconds from drop start. Time elapsed:', timeSinceLastDrop, 'ms');
+        
+        // Immediately stop all material movement and disable physics
+        this.materialsGroup.children.entries.forEach((material) => {
+          const sprite = material as Phaser.Physics.Arcade.Sprite;
+          const body = sprite.body as Phaser.Physics.Arcade.Body;
+          if (body && body.enable) {
+            body.setVelocity(0, 0);
+            body.setEnable(false);
+          }
+        });
       }
     }
     
@@ -772,27 +787,18 @@ export class GameScene extends Phaser.Scene {
   }
   
   private updateMaterialSettling() {
-    // Proper sleep system - only stop objects that are truly at rest
+    // Brute force physics stopping system - completely disable physics when frozen
     this.materialsGroup.children.entries.forEach((material) => {
       const sprite = material as Phaser.Physics.Arcade.Sprite;
       const body = sprite.body as Phaser.Physics.Arcade.Body;
       
-      if (body && body.enable) {
-        const speed = Math.sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y);
-        
-        // Initialize settling timer if not exists
-        if (!(sprite as any).settlingTimer) {
-          (sprite as any).settlingTimer = 0;
-        }
-        
-        // Brute force: Stop everything after a few seconds
+      if (body) {
         if (this.materialsAreFrozen) {
           // Completely disable physics body when frozen
           if (body.enable) {
-            body.setEnable(false);
-            sprite.setPosition(sprite.x, sprite.y); // Lock position
+            body.setVelocity(0, 0); // Stop all movement
+            body.setEnable(false); // Disable physics simulation
           }
-          return; // Skip all other physics processing
         } else {
           // Re-enable physics body if it was disabled
           if (!body.enable) {

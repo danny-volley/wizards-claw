@@ -36,8 +36,8 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
     const physicsRadius = this.displayWidth / 2; // Half of display width for radius
     body.setCircle(physicsRadius);
     
-    console.log(`PHYSICS DEBUG: Set radius to 100, actual body radius: ${body.radius}`);
-    console.log(`PHYSICS DEBUG: Body dimensions: ${body.width}x${body.height}`);
+    // console.log(`PHYSICS DEBUG: Set radius to 100, actual body radius: ${body.radius}`);
+    // console.log(`PHYSICS DEBUG: Body dimensions: ${body.width}x${body.height}`);
     body.setBounce(0); // Zero restitution prevents energy reintroduction
     body.setDrag(80); // Higher drag for natural settling
     body.setMaxVelocity(200);
@@ -46,7 +46,7 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
     
     // Discrete collision detection for stability
     body.debugBodyColor = 0x00ff00;
-    body.debugShowBody = true; // Show physics collision area
+    body.debugShowBody = false; // Hide physics collision area
     
     // Set sprite to invisible - we'll use a separate image for visuals
     this.setDisplaySize(Material.ART_SIZE, Material.ART_SIZE);
@@ -63,13 +63,13 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
     // Set up update event to sync positions every frame
     this.scene.events.on('update', this.updateVisualPosition, this);
     
-    // Debug logging to see actual sizes
-    console.log(`Material ${this.materialType}:`);
-    console.log(`  Original texture size: ${this.texture.source[0].width}x${this.texture.source[0].height}`);
-    console.log(`  Display size set to: ${Material.ART_SIZE}x${Material.ART_SIZE}`);
-    console.log(`  Actual display size: ${this.displayWidth}x${this.displayHeight}`);
-    console.log(`  Physics radius: ${Material.MATERIAL_RADIUS}`);
-    console.log(`  Physics body size: ${body.width}x${body.height}`);
+    // Debug logging to see actual sizes (commented out for production)
+    // console.log(`Material ${this.materialType}:`);
+    // console.log(`  Original texture size: ${this.texture.source[0].width}x${this.texture.source[0].height}`);
+    // console.log(`  Display size set to: ${Material.ART_SIZE}x${Material.ART_SIZE}`);
+    // console.log(`  Actual display size: ${this.displayWidth}x${this.displayHeight}`);
+    // console.log(`  Physics radius: ${Material.MATERIAL_RADIUS}`);
+    // console.log(`  Physics body size: ${body.width}x${body.height}`);
   }
   
   // Update visual position every frame to match physics

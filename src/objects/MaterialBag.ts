@@ -13,14 +13,14 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     // Add to scene
     scene.add.existing(this);
     
-    // Create visual representation
-    this.createBagVisual(); // Temporarily shown to visualize physics area
+    // Create visual representation - commented out since bag asset from UIManager fills this space
+    // this.createBagVisual(); // Temporarily shown to visualize physics area
     
     // Create invisible walls for physics containment
     this.createBagWalls();
     
-    // Initialize with 50% more materials
-    this.addRandomMaterials(12);
+    // Initialize with materials (reduced by 3 - one of each type)
+    this.addRandomMaterials(9);
   }
   
   private createBagVisual() {
