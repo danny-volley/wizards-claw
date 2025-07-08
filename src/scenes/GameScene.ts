@@ -44,7 +44,13 @@ export class GameScene extends Phaser.Scene {
     this.load.image('robe', 'src/assets/ui/wiz_ui_robe.png');
     this.load.image('bag', 'src/assets/ui/wiz_ui_bag.png');
     this.load.image('pouch', 'src/assets/ui/wiz_ui_pouch.png');
+    this.load.image('slot', 'src/assets/ui/wiz_ui_slot.png');
     this.load.image('scroll', 'src/assets/ui/wiz_ui_scroll.png');
+    
+    // Load material assets
+    this.load.image('material_fire', 'src/assets/ui/wiz_material_fire.png');
+    this.load.image('material_leaf', 'src/assets/ui/wiz_material_leaf.png');
+    this.load.image('material_rock', 'src/assets/ui/wiz_material_rock.png');
     this.load.image('claw', 'src/assets/ui/wiz_ui_claw_materials.png');
     this.load.image('claw_spells', 'src/assets/ui/wiz_ui_claw_spells.png');
     
@@ -128,8 +134,8 @@ export class GameScene extends Phaser.Scene {
   private createGameLayout() {
     // Based on 1280x720 layout with new UI positioning
     
-    // Create material bag using UIManager (center-bottom area)
-    this.uiManager.createMaterialBag(640, 500);
+    // Create material bag using UIManager (center area, slightly below center)
+    this.uiManager.createMaterialBag(640, 400);
     
     // Create material slots using UIManager (top of screen with padding)
     const topPadding = 60; // Padding from top of screen
@@ -151,9 +157,9 @@ export class GameScene extends Phaser.Scene {
     this.uiManager.createCharacterArea(200, 360);
     
     // Initialize existing systems with new positions
-    this.materialBag = new MaterialBag(this, 640, 500);
-    const bagBottomY = 500 + 60; // bag Y + half bag height
-    this.crane = new Crane(this, 640, 350, bagBottomY);
+    this.materialBag = new MaterialBag(this, 640, 400);
+    const bagBottomY = 400 + 185; // bag Y + half bag height (now 185 for larger bag)
+    this.crane = new Crane(this, 640, 200, bagBottomY); // Moved even higher up
     
     // Create spell selection system (positioned with spell window)
     this.spellArrow = new SpellArrow(this, this.spellWindowX, 360);

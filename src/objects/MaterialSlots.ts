@@ -3,8 +3,8 @@ import { Material, MaterialType } from './Material';
 export class MaterialSlots extends Phaser.GameObjects.Container {
   private slots: MaterialSlot[] = [];
   private maxSlots: number = 2;
-  private slotWidth: number = 50;
-  private slotHeight: number = 50;
+  private slotWidth: number = 70; // 40% bigger than 50
+  private slotHeight: number = 70; // 40% bigger than 50
   private slotSpacing: number = 80; // Increased spacing from 60 to 80
   private thirdSlotUnlocked: boolean = false;
   
@@ -115,8 +115,8 @@ class MaterialSlot extends Phaser.GameObjects.Container {
   private slotIndex: number;
   private material: Material | null = null;
   private slotBackground: Phaser.GameObjects.Graphics;
-  private slotWidth: number = 50;
-  private slotHeight: number = 50;
+  private slotWidth: number = 70; // 40% bigger than 50
+  private slotHeight: number = 70; // 40% bigger than 50
   
   constructor(scene: Phaser.Scene, x: number, y: number, index: number) {
     super(scene, x, y);
@@ -132,48 +132,32 @@ class MaterialSlot extends Phaser.GameObjects.Container {
   }
   
   private createSlotVisual() {
+    // Clear any existing graphics
     this.slotBackground.clear();
     
+    // Remove existing slot image if any
+    const existingImage = this.list.find(child => child.type === 'Image' && (child as any).texture?.key === 'slot');
+    if (existingImage) {
+      this.remove(existingImage);
+      existingImage.destroy();
+    }
+    
+    // Add slot artwork
+    const slotImage = this.scene.add.image(0, 0, 'slot');
+    
+    // Scale slot to fit the slot dimensions (70x70)
+    const targetSize = 70;
+    const scale = targetSize / Math.max(slotImage.width, slotImage.height);
+    slotImage.setScale(scale);
+    
+    // Adjust opacity based on slot state
     if (this.material) {
-      // Filled slot - more transparent
-      this.slotBackground.fillStyle(0x4a4a4a);
-      this.slotBackground.lineStyle(2, 0x666666);
-      this.slotBackground.setAlpha(0.3);
+      slotImage.setAlpha(1.0); // Full opacity when filled
     } else {
-      // Empty slot - more transparent
-      this.slotBackground.fillStyle(0x2a2a2a);
-      this.slotBackground.lineStyle(2, 0x666666, 1, 0.5);
-      this.slotBackground.setAlpha(0.2);
+      slotImage.setAlpha(0.7); // Slightly transparent when empty
     }
     
-    this.slotBackground.fillRoundedRect(
-      -this.slotWidth/2, 
-      -this.slotHeight/2, 
-      this.slotWidth, 
-      this.slotHeight, 
-      8
-    );
-    
-    this.slotBackground.strokeRoundedRect(
-      -this.slotWidth/2, 
-      -this.slotHeight/2, 
-      this.slotWidth, 
-      this.slotHeight, 
-      8
-    );
-    
-    // Add dashed border for empty slots
-    if (!this.material) {
-      this.slotBackground.lineStyle(2, 0x888888, 1, 0.5);
-      for (let i = 0; i < 4; i++) {
-        const angle = (i * Math.PI) / 2;
-        const startX = Math.cos(angle) * 20;
-        const startY = Math.sin(angle) * 20;
-        const endX = Math.cos(angle) * 25;
-        const endY = Math.sin(angle) * 25;
-        this.slotBackground.lineBetween(startX, startY, endX, endY);
-      }
-    }
+    this.add(slotImage);
   }
   
   public setMaterial(material: Material): boolean {

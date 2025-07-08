@@ -98,11 +98,11 @@ export class UIManager {
     );
     
     // Add bag artwork - scale to match physics area dimensions (160x120)
-    const bagImage = this.scene.add.image(0, 0, 'bag');
+    const bagImage = this.scene.add.image(5, 0, 'bag'); // Moved 10px to the right
     
-    // Calculate scale to match physics area size (160x120)
-    const targetWidth = 160;
-    const targetHeight = 120;
+    // Calculate scale to match physics area size (320x320)
+    const targetWidth = 320;
+    const targetHeight = 320;
     const scaleX = targetWidth / bagImage.width;
     const scaleY = targetHeight / bagImage.height;
     
@@ -204,9 +204,9 @@ export class UIManager {
       y * this.scaleY
     );
     
-    // Add crane artwork
+    // Add crane artwork - 100% larger (2x scale)
     const craneImage = this.scene.add.image(0, 0, 'claw');
-    craneImage.setScale(this.scaleX, this.scaleY);
+    craneImage.setScale(this.scaleX * 2, this.scaleY * 2);
     this.craneContainer.add(craneImage);
     
     this.gameAreaLayer.add(this.craneContainer);

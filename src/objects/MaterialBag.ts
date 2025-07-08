@@ -3,8 +3,8 @@ import { Material, MaterialType } from './Material';
 export class MaterialBag extends Phaser.GameObjects.Container {
   private materials: Material[] = [];
   private maxCapacity: number = 15;
-  private bagWidth: number = 160;
-  private bagHeight: number = 160;
+  private bagWidth: number = 380; // 100% larger (2x)
+  private bagHeight: number = 370; // 100% larger (2x)
   private bagWalls: Phaser.Physics.Arcade.StaticGroup;
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -14,7 +14,7 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     
     // Create visual representation
-    // this.createBagVisual(); // Hidden - bag asset from UIManager will fill this space
+    this.createBagVisual(); // Temporarily shown to visualize physics area
     
     // Create invisible walls for physics containment
     this.createBagWalls();
@@ -135,23 +135,20 @@ export class MaterialBag extends Phaser.GameObjects.Container {
       [materialsToAdd[i], materialsToAdd[j]] = [materialsToAdd[j], materialsToAdd[i]];
     }
     
-    // Add materials with shuffled types
+    // Add all materials at once so they fall together
     for (let i = 0; i < materialsToAdd.length && this.materials.length < this.maxCapacity; i++) {
       const materialType = materialsToAdd[i];
       
-      // Add materials with more staggered timing to prevent mid-air collisions
-      this.scene.time.delayedCall(i * 400, () => {
-        if (this.materials.length < this.maxCapacity) {
-          const material = new Material(
-            this.scene,
-            0, // Position will be set in addMaterial
-            0,
-            materialType
-          );
-          
-          this.addMaterialWithTiming(material);
-        }
-      });
+      if (this.materials.length < this.maxCapacity) {
+        const material = new Material(
+          this.scene,
+          0, // Position will be set in addMaterial
+          0,
+          materialType
+        );
+        
+        this.addMaterialWithTiming(material);
+      }
       
       added++;
     }
@@ -166,26 +163,49 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     
     this.materials.push(material);
     
-    // Position material inside bag bounds with improved spacing grid
+    // Position material randomly within entire bag area with proper margins
     const bagBounds = this.getBounds();
-    const dropZoneWidth = this.bagWidth - 80; // Even more margin for spacing
+    const materialRadius = 30; // Current material radius
+    const margin = materialRadius + 10; // Margin to prevent clipping through walls
     
-    // Create a grid-based drop system to prevent clustering
-    const gridCols = 3;
-    const gridRows = 2;
-    const materialIndex = this.materials.length;
-    const gridX = (materialIndex % gridCols) / (gridCols - 1); // 0, 0.5, 1
-    const gridY = Math.floor(materialIndex / gridCols) / Math.max(1, gridRows - 1); // 0, 1
+    // Use entire bag area minus margins
+    const spawnAreaWidth = this.bagWidth - (margin * 2);
+    const spawnAreaHeight = this.bagHeight - (margin * 2);
     
-    // Add small random offset to grid position
-    const randomOffsetX = (Math.random() - 0.5) * 15;
-    const randomOffsetY = (Math.random() - 0.5) * 10;
+    // Find a position that doesn't overlap with existing materials
+    let attempts = 0;
+    let validPosition = false;
+    let randomX, randomY;
     
-    const randomX = bagBounds.x + (bagBounds.width - dropZoneWidth) / 2 + 
-                   (gridX * dropZoneWidth) + randomOffsetX;
-    const dropY = bagBounds.y + 5 + (gridY * 5) + randomOffsetY; // Slightly staggered heights
+    while (!validPosition && attempts < 20) {
+      randomX = bagBounds.x + margin + Math.random() * spawnAreaWidth;
+      randomY = bagBounds.y + margin + Math.random() * spawnAreaHeight;
+      
+      // Check if this position is far enough from existing materials
+      validPosition = true;
+      for (const existingMaterial of this.materials) {
+        if (existingMaterial === material) continue; // Skip self
+        
+        const distance = Math.sqrt(
+          Math.pow(randomX - existingMaterial.x, 2) + 
+          Math.pow(randomY - existingMaterial.y, 2)
+        );
+        
+        if (distance < materialRadius * 2.5) { // 2.5x radius spacing
+          validPosition = false;
+          break;
+        }
+      }
+      attempts++;
+    }
     
-    material.setPosition(randomX, dropY);
+    // If we couldn't find a valid position, use a fallback
+    if (!validPosition) {
+      randomX = bagBounds.x + margin + Math.random() * spawnAreaWidth;
+      randomY = bagBounds.y + margin;
+    }
+    
+    material.setPosition(randomX, randomY);
     
     // Add to materials group for automatic collision handling
     const gameScene = this.scene as any;
