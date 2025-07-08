@@ -212,6 +212,9 @@ export class Crane extends Phaser.GameObjects.Container {
     this.grabbedMaterial = material;
     this.clawOpen = false;
     
+    // Mark material as being grabbed to exclude from collisions
+    material.isBeingGrabbed = true;
+    
     // Completely disable physics for grabbed material
     const body = material.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0, 0);
@@ -258,6 +261,8 @@ export class Crane extends Phaser.GameObjects.Container {
     
     // Emit event with grabbed material
     if (this.grabbedMaterial) {
+      // Clear the grabbed flag before emitting the event
+      this.grabbedMaterial.isBeingGrabbed = false;
       this.scene.events.emit('materialGrabbed', this.grabbedMaterial);
     }
     

@@ -6,6 +6,7 @@ export enum MaterialType {
 
 export class Material extends Phaser.Physics.Arcade.Sprite {
   public materialType: MaterialType;
+  public isBeingGrabbed: boolean = false;
   private static readonly COLORS = {
     [MaterialType.FIRE]: 0xff4444,
     [MaterialType.LEAF]: 0x44ff44,
@@ -20,14 +21,17 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
     
-    // Set up physics properties
+    // Set up physics properties with zero restitution for stability
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCircle(12);
-    body.setBounce(0.4);
-    body.setDrag(80);
-    body.setMaxVelocity(150);
+    body.setBounce(0); // Zero restitution prevents energy reintroduction
+    body.setDrag(80); // Higher drag for natural settling
+    body.setMaxVelocity(200);
     body.setCollideWorldBounds(true);
     body.setMass(1);
+    
+    // Discrete collision detection for stability
+    body.debugBodyColor = 0x00ff00;
     
     // Visual appearance
     this.setDisplaySize(24, 24);

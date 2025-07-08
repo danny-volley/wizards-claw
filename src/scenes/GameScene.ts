@@ -16,6 +16,9 @@ export class GameScene extends Phaser.Scene {
   private materialsGroup!: Phaser.Physics.Arcade.Group;
   private spellModeText: Phaser.GameObjects.Text | null = null;
   private availableSpells: string[] = [];
+  private globalSettleTimer: number = 0;
+  private materialsAreFrozen: boolean = false;
+  private lastMaterialDropTime: number = 0;
   
   constructor() {
     super({ key: 'GameScene' });
@@ -289,15 +292,89 @@ export class GameScene extends Phaser.Scene {
   }
   
   private setupPhysics() {
-    // Add collision between materials in the group (for stacking)
-    this.physics.add.collider(this.materialsGroup, this.materialsGroup);
+    // Add collision between materials in the group with separation callback
+    this.physics.add.collider(this.materialsGroup, this.materialsGroup, this.handleMaterialCollision, undefined, this);
     
     // Add collision between materials and bag walls
     this.physics.add.collider(this.materialsGroup, this.materialBag.getBagWalls());
   }
   
+  private handleMaterialCollision(material1: Phaser.Physics.Arcade.Sprite, material2: Phaser.Physics.Arcade.Sprite) {
+    // Skip collision handling if either object is being grabbed by crane
+    if ((material1 as any).isBeingGrabbed || (material2 as any).isBeingGrabbed) {
+      return;
+    }
+    
+    // Wake up both objects from sleep
+    this.wakeObject(material1);
+    this.wakeObject(material2);
+    
+    const body1 = material1.body as Phaser.Physics.Arcade.Body;
+    const body2 = material2.body as Phaser.Physics.Arcade.Body;
+    
+    const deltaX = material1.x - material2.x;
+    const deltaY = material1.y - material2.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    if (distance > 0 && distance < 25) {
+      const normalX = deltaX / distance;
+      const normalY = deltaY / distance;
+      const overlap = 25 - distance;
+      
+      // Apply separation force scaled by overlap
+      const separationForce = overlap * 3;
+      body1.setVelocityX(body1.velocity.x + normalX * separationForce);
+      body2.setVelocityX(body2.velocity.x - normalX * separationForce);
+      
+      // Add horizontal sliding force to prevent sticking
+      const slideForce = 15;
+      body1.setVelocityX(body1.velocity.x + Math.sign(normalX) * slideForce);
+      body2.setVelocityX(body2.velocity.x - Math.sign(normalX) * slideForce);
+      
+      // Vertical separation only if side-by-side
+      if (Math.abs(normalY) < 0.7) {
+        body1.setVelocityY(body1.velocity.y + normalY * separationForce * 0.5);
+        body2.setVelocityY(body2.velocity.y - normalY * separationForce * 0.5);
+      }
+    }
+  }
+  
   public getMaterialsGroup(): Phaser.Physics.Arcade.Group {
     return this.materialsGroup;
+  }
+  
+  private sleepObject(sprite: Phaser.Physics.Arcade.Sprite) {
+    const body = sprite.body as Phaser.Physics.Arcade.Body;
+    body.setVelocity(0, 0);
+    (sprite as any).isAsleep = true;
+    (sprite as any).settlingTimer = 0;
+  }
+  
+  private wakeObject(sprite: Phaser.Physics.Arcade.Sprite) {
+    (sprite as any).isAsleep = false;
+    (sprite as any).settlingTimer = 0;
+  }
+  
+  public wakeAllMaterials() {
+    // Wake all materials when something significant happens (like object removal)
+    this.materialsGroup.children.entries.forEach((material) => {
+      this.wakeObject(material as Phaser.Physics.Arcade.Sprite);
+    });
+  }
+  
+  private reenableAllPhysics() {
+    // Re-enable physics for all materials
+    this.materialsGroup.children.entries.forEach((material) => {
+      const sprite = material as Phaser.Physics.Arcade.Sprite;
+      const body = sprite.body as Phaser.Physics.Arcade.Body;
+      if (!body.enable) {
+        body.setEnable(true);
+      }
+      this.wakeObject(sprite);
+    });
+    
+    // Restart the settle timer after re-enabling physics
+    this.lastMaterialDropTime = this.time.now;
   }
   
   private setupEventHandlers() {
@@ -310,10 +387,25 @@ export class GameScene extends Phaser.Scene {
     this.events.on('craneActionComplete', () => {
       this.handleCraneActionComplete();
     });
+    
+    // Handle material dropped
+    this.events.on('materialDropped', () => {
+      this.lastMaterialDropTime = this.time.now;
+      this.materialsAreFrozen = false;
+      // Re-enable physics for all materials when new ones are added
+      this.reenableAllPhysics();
+    });
   }
   
   private handleMaterialGrabbed(material: Material) {
     console.log('Material grabbed:', material.materialType);
+    
+    // Unfreeze materials when crane picks something up
+    this.materialsAreFrozen = false;
+    console.log('Materials unfrozen - physics resumed');
+    
+    // Re-enable physics for all materials and wake them (this will restart the timer)
+    this.reenableAllPhysics();
     
     // Remove material from bag
     this.materialBag.removeMaterial(material);
@@ -385,6 +477,9 @@ export class GameScene extends Phaser.Scene {
     
     // Handle Gather action
     if (spellName === 'Gather') {
+      // Unfreeze materials when new ones are added
+      this.materialsAreFrozen = false;
+      this.reenableAllPhysics(); // Re-enable physics (this will restart the timer)
       this.materialBag.addGatherMaterials(4);
     }
   }
@@ -401,6 +496,20 @@ export class GameScene extends Phaser.Scene {
     // Update spell arrow (only when casting spells)
     if (this.gameState === 'casting') {
       this.spellArrow.update();
+    }
+    
+    // Apply settling physics to materials (simple sleep system)
+    this.updateMaterialSettling();
+    
+    // Global settle timer - freeze all materials after last drop
+    if (!this.materialsAreFrozen && this.lastMaterialDropTime > 0) {
+      const timeSinceLastDrop = this.time.now - this.lastMaterialDropTime;
+      
+      // Only freeze if crane is not active and enough time has passed
+      if (timeSinceLastDrop > 3000 && !this.crane.isActive()) { // 3 seconds
+        this.materialsAreFrozen = true;
+        console.log('Materials frozen - all physics stopped');
+      }
     }
     
     // Handle input based on current state
@@ -423,5 +532,37 @@ export class GameScene extends Phaser.Scene {
         this.handleSpellSelection(selectedSpell);
       }
     }
+  }
+  
+  private updateMaterialSettling() {
+    // Proper sleep system - only stop objects that are truly at rest
+    this.materialsGroup.children.entries.forEach((material) => {
+      const sprite = material as Phaser.Physics.Arcade.Sprite;
+      const body = sprite.body as Phaser.Physics.Arcade.Body;
+      
+      if (body && body.enable) {
+        const speed = Math.sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y);
+        
+        // Initialize settling timer if not exists
+        if (!(sprite as any).settlingTimer) {
+          (sprite as any).settlingTimer = 0;
+        }
+        
+        // Brute force: Stop everything after a few seconds
+        if (this.materialsAreFrozen) {
+          // Completely disable physics body when frozen
+          if (body.enable) {
+            body.setEnable(false);
+            sprite.setPosition(sprite.x, sprite.y); // Lock position
+          }
+          return; // Skip all other physics processing
+        } else {
+          // Re-enable physics body if it was disabled
+          if (!body.enable) {
+            body.setEnable(true);
+          }
+        }
+      }
+    });
   }
 }

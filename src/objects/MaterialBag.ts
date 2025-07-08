@@ -91,12 +91,13 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     
     this.materials.push(material);
     
-    // Position material randomly within bag bounds (but above existing materials)
+    // Position material randomly within bag bounds with better spacing
     const bagBounds = this.getBounds();
-    const randomX = bagBounds.x + Math.random() * (bagBounds.width - 40) + 20;
-    const randomY = bagBounds.y - 20; // Start above the bag to let it fall naturally
+    const dropZoneWidth = this.bagWidth - 60; // More margin for spacing
+    const randomX = bagBounds.x + (bagBounds.width - dropZoneWidth) / 2 + Math.random() * dropZoneWidth;
+    const dropY = bagBounds.y + 10; // Drop from just inside the top of the bag
     
-    material.setPosition(randomX, randomY);
+    material.setPosition(randomX, dropY);
     
     // Add to materials group for automatic collision handling
     const gameScene = this.scene as any;
@@ -104,12 +105,15 @@ export class MaterialBag extends Phaser.GameObjects.Container {
       gameScene.getMaterialsGroup().add(material);
     }
     
-    // Add slight random velocity for natural settling
+    // Add natural falling velocity with less horizontal randomness
     const body = material.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(
-      (Math.random() - 0.5) * 30,
-      (Math.random() - 0.5) * 20 + 50 // Slight downward bias
+      (Math.random() - 0.5) * 15, // Less horizontal variance
+      Math.random() * 20 + 30 // Consistent downward velocity
     );
+    
+    // Notify scene that a material was dropped
+    this.scene.events.emit('materialDropped');
     
     return true;
   }
@@ -150,11 +154,11 @@ export class MaterialBag extends Phaser.GameObjects.Container {
     
     this.materials.push(material);
     
-    // Position material inside bag bounds with varied drop positions
+    // Position material inside bag bounds with better spacing
     const bagBounds = this.getBounds();
-    const dropZoneWidth = this.bagWidth - 50; // Leave margins
+    const dropZoneWidth = this.bagWidth - 60; // More margin for spacing
     const randomX = bagBounds.x + (bagBounds.width - dropZoneWidth) / 2 + Math.random() * dropZoneWidth;
-    const dropY = bagBounds.y - 40; // Start well above the bag
+    const dropY = bagBounds.y + 5; // Drop from just inside the top of the bag
     
     material.setPosition(randomX, dropY);
     
@@ -164,12 +168,15 @@ export class MaterialBag extends Phaser.GameObjects.Container {
       gameScene.getMaterialsGroup().add(material);
     }
     
-    // Add natural falling velocity with slight randomization
+    // Add natural falling velocity with minimal horizontal variance
     const body = material.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(
-      (Math.random() - 0.5) * 20, // Small horizontal variance
-      Math.random() * 30 + 20 // Downward velocity
+      (Math.random() - 0.5) * 10, // Minimal horizontal variance
+      Math.random() * 20 + 40 // Stronger downward velocity
     );
+    
+    // Notify scene that a material was dropped
+    this.scene.events.emit('materialDropped');
     
     return true;
   }
