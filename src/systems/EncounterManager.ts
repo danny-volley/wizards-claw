@@ -123,9 +123,9 @@ export class EncounterManager {
     // This prevents the next encounter from starting immediately
   }
   
-  public handlePlayerSpell(spell: any): void {
+  public handlePlayerSpell(castResult: any): void {
     if (this.currentEncounter && this.currentEncounter instanceof CombatEncounter) {
-      this.currentEncounter.handlePlayerSpell(spell);
+      this.currentEncounter.handlePlayerSpell(castResult);
     }
   }
   

@@ -18,6 +18,7 @@ export interface SpellCastResult {
   effectiveness: number;
   damage?: number;
   healing?: number;
+  defense?: number;
   effects: ActiveEffect[];
   message: string;
 }
@@ -31,8 +32,8 @@ export class SpellEffectsSystem {
     this.scene = scene;
   }
   
-  public castSpell(spell: SpellRecipe, timingAccuracy: number): SpellCastResult {
-    const effectMultiplier = 0.7 + (timingAccuracy * 0.3); // 70% to 100% effectiveness
+  public castSpell(spell: SpellRecipe, timingModifier: number): SpellCastResult {
+    const effectMultiplier = timingModifier; // Use timing modifier directly
     
     const result: SpellCastResult = {
       success: true,
@@ -59,7 +60,8 @@ export class SpellEffectsSystem {
         break;
         
       case 'defensive':
-        result.message = `${spell.name} provides protection`;
+        result.defense = Math.round(spell.effect.value * effectMultiplier);
+        result.message = `${spell.name} provides ${result.defense} defense`;
         break;
     }
     
@@ -161,15 +163,15 @@ export class SpellEffectsSystem {
     this.scene.tweens.add({
       targets: effectContainer,
       scale: 1.2,
-      duration: 200,
+      duration: 400,
       ease: 'Back.easeOut',
       yoyo: true,
       onComplete: () => {
         this.scene.tweens.add({
           targets: effectContainer,
           alpha: 0,
-          duration: 500,
-          delay: 500,
+          duration: 1000,
+          delay: 1000,
           onComplete: () => effectContainer.destroy()
         });
       }

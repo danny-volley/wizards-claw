@@ -128,24 +128,24 @@ export class CombatEncounter extends BaseEncounter {
   }
   
   // Called by GameScene when player casts a spell
-  public handlePlayerSpell(spell: SpellRecipe): void {
-    console.log(`Combat phase: ${this.combatPhase}, handling spell: ${spell.name}`);
+  public handlePlayerSpell(castResult: any): void {
+    console.log(`Combat phase: ${this.combatPhase}, handling spell: ${castResult.spell.name}`);
     if (this.combatPhase !== CombatPhase.PLAYER_TURN) {
       console.log(`Not player's turn - ignoring spell cast`);
       return; // Not player's turn
     }
     
-    // Apply spell effect
-    const damage = this.calculateSpellDamage(spell);
-    const healing = this.calculateSpellHealing(spell);
-    const defense = this.calculateSpellDefense(spell);
+    // Use timing-modified spell effects from SpellEffectsSystem
+    const damage = castResult.damage || 0;
+    const healing = castResult.healing || 0;
+    const defense = castResult.defense || 0;
     
     if (damage > 0) {
       this.enemyCurrentHealth = Math.max(0, this.enemyCurrentHealth - damage);
       this.scene.setEnemyHealth(this.enemyCurrentHealth, this.enemyData.maxHealth);
       this.scene.showPlayerAttackEffect(damage);
       this.scene.showDamageEffect(damage, true); // true = damage to enemy
-      console.log(`${spell.name} deals ${damage} damage to ${this.enemyData.displayName}!`);
+      console.log(`${castResult.spell.name} deals ${damage} damage to ${this.enemyData.displayName}!`);
       console.log(`Enemy health: ${this.enemyCurrentHealth}/${this.enemyData.maxHealth}`);
       
       // Check victory immediately after damage
@@ -158,13 +158,13 @@ export class CombatEncounter extends BaseEncounter {
       this.playerCurrentHealth = Math.min(this.playerMaxHealth, this.playerCurrentHealth + healing);
       this.scene.setPlayerHealth(this.playerCurrentHealth, this.playerMaxHealth);
       this.scene.showHealingEffect(healing);
-      console.log(`${spell.name} heals ${healing} health!`);
+      console.log(`${castResult.spell.name} heals ${healing} health!`);
     }
     
     if (defense > 0) {
       this.playerDefense += defense;
       this.scene.showDefenseEffect(defense);
-      console.log(`${spell.name} provides ${defense} defense for next attack!`);
+      console.log(`${castResult.spell.name} provides ${defense} defense for next attack!`);
     }
     
     // End player turn

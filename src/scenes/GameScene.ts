@@ -9,6 +9,7 @@ import { SpellDatabase, SpellRecipe } from '../systems/SpellDatabase';
 import { SpellEffectsSystem } from '../systems/SpellEffectsSystem';
 import { RecipeHintSystem } from '../systems/RecipeHintSystem';
 import { UIManager } from '../systems/UIManager';
+import { TimingSpellSelector, TimingResult } from '../systems/TimingSpellSelector';
 import { EncounterManager } from '../systems/EncounterManager';
 import { EncounterResultWindow } from '../ui/EncounterResultWindow';
 import { EncounterResult } from '../encounters/BaseEncounter';
@@ -31,7 +32,9 @@ export class GameScene extends Phaser.Scene {
   private spellEffectsSystem!: SpellEffectsSystem;
   private recipeHintSystem!: RecipeHintSystem;
   private uiManager!: UIManager;
+  private timingSpellSelector!: TimingSpellSelector;
   private spellWindowX!: number;
+  private spellStartY: number = 0;
   private spellDisplayElements: Phaser.GameObjects.GameObject[] = []; // Track spell elements for clearing
   
   // Encounter system
@@ -147,10 +150,10 @@ export class GameScene extends Phaser.Scene {
       console.log('Campfire system initialized');
       
       // Create debug campfire button
-      this.createCampfireDebugButton();
+      // this.createCampfireDebugButton();
       
       // Create debug map button
-      this.createMapDebugButton();
+      // this.createMapDebugButton();
       
       // Initialize spell effects system
       this.spellEffectsSystem = new SpellEffectsSystem(this);
@@ -159,6 +162,10 @@ export class GameScene extends Phaser.Scene {
       // Initialize recipe hint system
       this.recipeHintSystem = new RecipeHintSystem(this);
       console.log('Recipe hint system created');
+      
+      // Initialize timing spell selector
+      this.timingSpellSelector = new TimingSpellSelector(this);
+      console.log('Timing spell selector created');
       
       // Create main game areas based on mockup layout
       this.createGameLayout();
@@ -483,6 +490,7 @@ export class GameScene extends Phaser.Scene {
     
     // Create dynamic spell menu background and get start Y position
     const startY = this.createDynamicSpellMenu(totalSpells);
+    this.spellStartY = startY; // Store for timing system
     
     let yPos = startY;
     
@@ -572,16 +580,18 @@ export class GameScene extends Phaser.Scene {
         this.spellDisplayElements.push(materialIcon);
       });
     } else {
-      // Gather spell - show a special icon in material area
-      const gatherIcon = this.add.graphics();
-      const iconColor = (isSelectionMode && !available) ? 0x444444 : 0x88ff88;
-      gatherIcon.lineStyle(1.5, iconColor);
-      gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 6, yPos - 3);
-      gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 6, yPos + 3);
-      gatherIcon.lineBetween(materialAreaX - 2, yPos, materialAreaX + 8, yPos);
-      // Darken icon during selection mode if spell is unavailable
+      // Gather spell - show the gather_icon asset
+      const gatherIcon = this.add.image(materialAreaX + (materialAreaWidth / 2), yPos, 'gather_icon');
+      
+      const iconSize = 16; // Size of gather icon
+      gatherIcon.setScale(iconSize / gatherIcon.width); // Scale to desired size
+      gatherIcon.setOrigin(0.5, 0.5);
+      gatherIcon.setDepth(5); // Above scroll UI but behind crane arm
+      
+      // Apply tinting and opacity based on availability
       if (isSelectionMode && !available) {
         gatherIcon.setAlpha(0.2); // Much lower opacity for unavailable spells
+        gatherIcon.setTint(0x444444); // Gray tint for unavailable
       }
       
       // Track gather icon for clearing
@@ -802,6 +812,9 @@ export class GameScene extends Phaser.Scene {
         console.log('Starting spell selection arrow');
         this.spellArrow.startSelection();
         
+        // Start timing selection system
+        this.timingSpellSelector.startTimingSelection(this.availableSpells, this.spellWindowX, this.spellStartY);
+        
         // Visual indicator removed - no longer needed
       }
     }
@@ -811,11 +824,15 @@ export class GameScene extends Phaser.Scene {
     // Reset to selecting state if not full
     if (!this.materialSlots.isFull()) {
       this.gameState = 'selecting';
+      // Stop timing system if it's running
+      if (this.timingSpellSelector.isTimingActive()) {
+        this.timingSpellSelector.stop();
+      }
     }
   }
   
-  private handleSpellSelection(spellName: string, timingAccuracy: number = 1.0) {
-    console.log(`Selected spell: ${spellName} with ${(timingAccuracy * 100).toFixed(1)}% accuracy`);
+  private handleSpellSelection(spellName: string, timingModifier: number = 1.0) {
+    console.log(`Selected spell: ${spellName} with ${timingModifier}x timing modifier`);
     
     // Stop spell selection
     console.log('Stopping spell selection arrow');
@@ -831,7 +848,7 @@ export class GameScene extends Phaser.Scene {
     
     if (spellRecipe) {
       // Cast the spell with effects
-      const castResult = this.spellEffectsSystem.castSpell(spellRecipe, timingAccuracy);
+      const castResult = this.spellEffectsSystem.castSpell(spellRecipe, timingModifier);
       console.log(castResult.message);
       
       // Show effects summary
@@ -843,7 +860,7 @@ export class GameScene extends Phaser.Scene {
       
       // Handle encounter spell casting
       if (this.encounterManager.isEncounterActive()) {
-        this.encounterManager.handlePlayerSpell(spellRecipe);
+        this.encounterManager.handlePlayerSpell(castResult);
       }
     }
     
@@ -937,12 +954,21 @@ export class GameScene extends Phaser.Scene {
       const selectedSpellIndex = this.spellArrow.getCurrentSpellIndex();
       if (selectedSpellIndex >= 0 && selectedSpellIndex < this.availableSpells.length) {
         const selectedSpell = this.availableSpells[selectedSpellIndex];
-        const timingAccuracy = this.spellArrow.getTimingAccuracy();
+        
+        // Update timing selector to match arrow position
+        this.timingSpellSelector.setCurrentSpell(selectedSpellIndex);
+        
+        // Get timing result using arrow position
+        const timingResult = this.timingSpellSelector.selectCurrentSpell(this.spellArrow.y);
         
         console.log('Selected spell:', selectedSpell.name);
-        console.log('Timing accuracy:', timingAccuracy.toFixed(2));
+        console.log('Timing quality:', timingResult?.quality || 'none');
+        console.log('Timing modifier:', timingResult?.modifier || 1.0);
         
-        this.handleSpellSelection(selectedSpell.name, timingAccuracy);
+        // Stop timing system
+        this.timingSpellSelector.stop();
+        
+        this.handleSpellSelection(selectedSpell.name, timingResult?.modifier || 1.0);
       }
     }
   }
@@ -1092,7 +1118,7 @@ export class GameScene extends Phaser.Scene {
       targets: damageText,
       y: targetY - 50,
       alpha: 0,
-      duration: 1000,
+      duration: 2000,
       ease: 'Power2.easeOut',
       onComplete: () => damageText.destroy()
     });
@@ -1111,7 +1137,7 @@ export class GameScene extends Phaser.Scene {
       targets: healingText,
       y: 630,
       alpha: 0,
-      duration: 1000,
+      duration: 2000,
       ease: 'Power2.easeOut',
       onComplete: () => healingText.destroy()
     });
@@ -1130,7 +1156,7 @@ export class GameScene extends Phaser.Scene {
       targets: defenseText,
       y: 630,
       alpha: 0,
-      duration: 1000,
+      duration: 2000,
       ease: 'Power2.easeOut',
       onComplete: () => defenseText.destroy()
     });
@@ -1153,7 +1179,7 @@ export class GameScene extends Phaser.Scene {
       scaleX: 3,
       scaleY: 3,
       alpha: 0,
-      duration: 800,
+      duration: 1600,
       ease: 'Power2.easeOut',
       onComplete: () => impactCircle.destroy()
     });
@@ -1177,7 +1203,7 @@ export class GameScene extends Phaser.Scene {
         x: targetX,
         y: targetY,
         alpha: 0,
-        duration: 300 + Math.random() * 200,
+        duration: 600 + Math.random() * 400,
         ease: 'Power2.easeOut',
         onComplete: () => particle.destroy()
       });
@@ -1201,7 +1227,7 @@ export class GameScene extends Phaser.Scene {
       scaleX: 3,
       scaleY: 3,
       alpha: 0,
-      duration: 800,
+      duration: 1600,
       ease: 'Power2.easeOut',
       onComplete: () => impactCircle.destroy()
     });
@@ -1237,7 +1263,7 @@ export class GameScene extends Phaser.Scene {
         x: targetX,
         y: targetY,
         alpha: 0,
-        duration: 300 + Math.random() * 200,
+        duration: 600 + Math.random() * 400,
         ease: 'Power2.easeOut',
         onComplete: () => particle.destroy()
       });
