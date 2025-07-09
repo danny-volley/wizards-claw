@@ -9,6 +9,10 @@ import { SpellDatabase, SpellRecipe } from '../systems/SpellDatabase';
 import { SpellEffectsSystem } from '../systems/SpellEffectsSystem';
 import { RecipeHintSystem } from '../systems/RecipeHintSystem';
 import { UIManager } from '../systems/UIManager';
+import { EncounterManager } from '../systems/EncounterManager';
+import { EncounterResultWindow } from '../ui/EncounterResultWindow';
+import { EncounterResult } from '../encounters/BaseEncounter';
+import { EnemyData } from '../data/EnemyData';
 
 export class GameScene extends Phaser.Scene {
   private inputSystem!: InputSystem;
@@ -28,6 +32,12 @@ export class GameScene extends Phaser.Scene {
   private uiManager!: UIManager;
   private spellWindowX!: number;
   private spellDisplayElements: Phaser.GameObjects.GameObject[] = []; // Track spell elements for clearing
+  
+  // Encounter system
+  private encounterManager!: EncounterManager;
+  private encounterResultWindow!: EncounterResultWindow;
+  private currentEnemyImage: Phaser.GameObjects.Image | null = null;
+  private turnIndicatorText: Phaser.GameObjects.Text | null = null;
   
   // Health bar components
   private enemyHealthBack!: Phaser.GameObjects.Image;
@@ -75,7 +85,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image('char_yuvor', 'src/assets/characters/wiz_char_yuvor.png');
     
     // Load enemy assets
-    this.load.image('enemy_lizard', 'src/assets/enemies/wiz_battle_lizard.png');
+    this.load.image('battle_lizard', 'src/assets/enemies/wiz_battle_lizard.png');
+    this.load.image('battle_fox', 'src/assets/enemies/wiz_battle_fox.png');
+    this.load.image('battle_crane', 'src/assets/enemies/wiz_battle_crane.png');
     
     // Load health bar assets
     this.load.image('health_back', 'src/assets/ui/wiz_ui_health_back.png');
@@ -134,8 +146,20 @@ export class GameScene extends Phaser.Scene {
       this.setupEventHandlers();
       console.log('Event handlers setup');
       
+      // Initialize encounter system
+      this.encounterManager = new EncounterManager(this);
+      this.encounterManager.initialize();
+      console.log('Encounter manager initialized');
+      
+      // Initialize result window
+      this.encounterResultWindow = new EncounterResultWindow(this);
+      console.log('Encounter result window initialized');
+      
       // Initial game state
       this.gameState = 'selecting';
+      
+      // Start first encounter automatically
+      this.encounterManager.startNextEncounter();
       
       // Add instructions - positioned in right bottom corner
       this.add.text(1250, 690, 'Spacebar to choose', {
@@ -194,19 +218,22 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createCombatArea() {
-    // Create enemy image on the left side
-    const enemyImage = this.add.image(200, 360, 'enemy_lizard');
-    enemyImage.setOrigin(0.5, 0.5); // Center the image
-    enemyImage.setScale(0.35); // Reduced by 30% from 0.5 to 0.35
-    
     // Create enemy health bar above the enemy
     this.createEnemyHealthBar();
     
     // Create player health bar at the bottom
     this.createPlayerHealthBar();
     
-    // TODO: This will be dynamic based on the encounter
-    // For now using wiz_battle_lizard as placeholder
+    // Create turn indicator text
+    this.turnIndicatorText = this.add.text(200, 40, 'Your Turn', {
+      fontSize: '24px',
+      color: '#ffff00',
+      fontStyle: 'bold'
+    });
+    this.turnIndicatorText.setOrigin(0.5, 0.5);
+    this.turnIndicatorText.setVisible(false);
+    
+    // Enemy image will be created dynamically by encounter system
   }
   
   private createEnemyHealthBar() {
@@ -282,6 +309,13 @@ export class GameScene extends Phaser.Scene {
       // Scale the front image based on current health percentage
       const healthPercentage = this.enemyCurrentHealth / this.enemyMaxHealth;
       this.enemyHealthFront.setScale(0.25 * healthPercentage, 0.25); // Scale width only
+      
+      // Adjust position to scale from right to left
+      const healthBarBack = this.enemyHealthBack;
+      const fullWidth = healthBarBack.width * healthBarBack.scaleX;
+      const currentWidth = fullWidth * healthPercentage;
+      const offsetX = (fullWidth - currentWidth) / 2;
+      this.enemyHealthFront.setPosition(healthBarBack.x - offsetX, healthBarBack.y);
     }
     
     // Update the health number display
@@ -295,6 +329,13 @@ export class GameScene extends Phaser.Scene {
       // Scale the front image based on current health percentage
       const healthPercentage = this.playerCurrentHealth / this.playerMaxHealth;
       this.playerHealthFront.setScale(0.25 * healthPercentage, 0.25); // Scale width only
+      
+      // Adjust position to scale from right to left
+      const healthBarBack = this.playerHealthBack;
+      const fullWidth = healthBarBack.width * healthBarBack.scaleX;
+      const currentWidth = fullWidth * healthPercentage;
+      const offsetX = (fullWidth - currentWidth) / 2;
+      this.playerHealthFront.setPosition(healthBarBack.x - offsetX, healthBarBack.y);
     }
     
     // Update the health number display
@@ -785,6 +826,11 @@ export class GameScene extends Phaser.Scene {
           console.log(`Active effect: ${effect.name} for ${effect.remainingTurns} turns`);
         });
       }
+      
+      // Handle encounter spell casting
+      if (this.encounterManager.isEncounterActive()) {
+        this.encounterManager.handlePlayerSpell(spellRecipe);
+      }
     }
     
     // Destroy the used materials (make them disappear)
@@ -815,6 +861,9 @@ export class GameScene extends Phaser.Scene {
 
   update() {
     this.inputSystem.update();
+    
+    // Update encounter system
+    this.encounterManager.update(this.time.now, this.time.delta);
     
     // Update crane movement (only when selecting materials)
     if (this.gameState === 'selecting') {
@@ -952,5 +1001,247 @@ export class GameScene extends Phaser.Scene {
         });
       });
     }
+  }
+  
+  // === ENCOUNTER SYSTEM INTERFACE METHODS ===
+  
+  public setEnemyData(enemyData: EnemyData): void {
+    // Remove existing enemy image if any
+    if (this.currentEnemyImage) {
+      this.currentEnemyImage.destroy();
+    }
+    
+    // Create new enemy image
+    this.currentEnemyImage = this.add.image(200, 360, enemyData.assetKey);
+    this.currentEnemyImage.setOrigin(0.5, 0.5);
+    this.currentEnemyImage.setScale(enemyData.scale);
+    
+    // Update health bar text
+    this.enemyHealthText.setText(enemyData.displayName);
+  }
+  
+  public setEnemyHealth(current: number, max: number): void {
+    this.enemyCurrentHealth = current;
+    this.enemyMaxHealth = max;
+    this.updateEnemyHealthBar();
+  }
+  
+  public setPlayerHealth(current: number, max: number): void {
+    this.playerCurrentHealth = current;
+    this.playerMaxHealth = max;
+    this.updatePlayerHealthBar();
+  }
+  
+  public showCombatUI(show: boolean): void {
+    if (this.turnIndicatorText) {
+      this.turnIndicatorText.setVisible(show);
+    }
+  }
+  
+  public setPlayerTurn(isPlayerTurn: boolean): void {
+    if (this.turnIndicatorText) {
+      if (isPlayerTurn) {
+        this.turnIndicatorText.setText('Your Turn');
+        this.turnIndicatorText.setColor('#ffff00');
+        // Show crane during player turn
+        this.crane.setVisible(true);
+      } else {
+        this.turnIndicatorText.setText('Enemy Turn');
+        this.turnIndicatorText.setColor('#ff8800');
+        // Hide crane during enemy turn
+        this.crane.setVisible(false);
+      }
+      this.turnIndicatorText.setVisible(true);
+    }
+  }
+  
+  public showDamageEffect(damage: number, toEnemy: boolean): void {
+    const targetX = toEnemy ? 200 : 200;
+    const targetY = toEnemy ? 100 : 680; // Enemy damage appears near enemy health bar
+    
+    const damageText = this.add.text(targetX, targetY, `-${damage}`, {
+      fontSize: '32px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    });
+    damageText.setOrigin(0.5, 0.5);
+    
+    // Animate damage text
+    this.tweens.add({
+      targets: damageText,
+      y: targetY - 50,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2.easeOut',
+      onComplete: () => damageText.destroy()
+    });
+  }
+  
+  public showHealingEffect(healing: number): void {
+    const healingText = this.add.text(200, 680, `+${healing}`, {
+      fontSize: '32px',
+      color: '#00ff00',
+      fontStyle: 'bold'
+    });
+    healingText.setOrigin(0.5, 0.5);
+    
+    // Animate healing text
+    this.tweens.add({
+      targets: healingText,
+      y: 630,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2.easeOut',
+      onComplete: () => healingText.destroy()
+    });
+  }
+  
+  public showDefenseEffect(defense: number): void {
+    const defenseText = this.add.text(200, 680, `+${defense} DEF`, {
+      fontSize: '32px',
+      color: '#0088ff',
+      fontStyle: 'bold'
+    });
+    defenseText.setOrigin(0.5, 0.5);
+    
+    // Animate defense text
+    this.tweens.add({
+      targets: defenseText,
+      y: 630,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2.easeOut',
+      onComplete: () => defenseText.destroy()
+    });
+  }
+  
+  public showEnemyAttackEffect(damage: number): void {
+    // Create a simple impact effect near the player health bar
+    const effectX = 200;
+    const effectY = 680;
+    
+    // Create red impact circle - start bigger and make it more visible
+    const impactCircle = this.add.graphics();
+    impactCircle.fillStyle(0xff0000, 0.9);
+    impactCircle.fillCircle(0, 0, 40); // Start with 40px radius
+    impactCircle.setPosition(effectX, effectY);
+    
+    // Create impact animation - slower and more visible
+    this.tweens.add({
+      targets: impactCircle,
+      scaleX: 3,
+      scaleY: 3,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power2.easeOut',
+      onComplete: () => impactCircle.destroy()
+    });
+    
+    // Create screen shake effect
+    this.cameras.main.shake(200, 0.01);
+    
+    // Create attack particles
+    for (let i = 0; i < 5; i++) {
+      const particle = this.add.graphics();
+      particle.fillStyle(0xff6600, 1);
+      particle.fillCircle(effectX, effectY, 3);
+      
+      const angle = (Math.PI * 2 * i) / 5;
+      const distance = 30 + Math.random() * 20;
+      const targetX = effectX + Math.cos(angle) * distance;
+      const targetY = effectY + Math.sin(angle) * distance;
+      
+      this.tweens.add({
+        targets: particle,
+        x: targetX,
+        y: targetY,
+        alpha: 0,
+        duration: 300 + Math.random() * 200,
+        ease: 'Power2.easeOut',
+        onComplete: () => particle.destroy()
+      });
+    }
+  }
+  
+  public showPlayerAttackEffect(damage: number): void {
+    // Create impact effect on the enemy character
+    const effectX = 200;
+    const effectY = 360;
+    
+    // Create blue/yellow impact circle for player attacks
+    const impactCircle = this.add.graphics();
+    impactCircle.fillStyle(0xffaa00, 0.9); // Orange/yellow color
+    impactCircle.fillCircle(0, 0, 40);
+    impactCircle.setPosition(effectX, effectY);
+    
+    // Create impact animation
+    this.tweens.add({
+      targets: impactCircle,
+      scaleX: 3,
+      scaleY: 3,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power2.easeOut',
+      onComplete: () => impactCircle.destroy()
+    });
+    
+    // Make enemy shake when hit
+    if (this.currentEnemyImage) {
+      const originalX = this.currentEnemyImage.x;
+      this.tweens.add({
+        targets: this.currentEnemyImage,
+        x: originalX + 10,
+        duration: 50,
+        yoyo: true,
+        repeat: 3,
+        onComplete: () => {
+          this.currentEnemyImage!.setX(originalX);
+        }
+      });
+    }
+    
+    // Create attack particles (blue/yellow theme)
+    for (let i = 0; i < 5; i++) {
+      const particle = this.add.graphics();
+      particle.fillStyle(0xffff00, 1); // Yellow particles
+      particle.fillCircle(effectX, effectY, 3);
+      
+      const angle = (Math.PI * 2 * i) / 5;
+      const distance = 30 + Math.random() * 20;
+      const targetX = effectX + Math.cos(angle) * distance;
+      const targetY = effectY + Math.sin(angle) * distance;
+      
+      this.tweens.add({
+        targets: particle,
+        x: targetX,
+        y: targetY,
+        alpha: 0,
+        duration: 300 + Math.random() * 200,
+        ease: 'Power2.easeOut',
+        onComplete: () => particle.destroy()
+      });
+    }
+  }
+  
+  public showEncounterResult(result: EncounterResult): void {
+    this.encounterResultWindow.show(result);
+  }
+  
+  public onEncounterResultClosed(): void {
+    this.encounterManager.onEncounterResultClosed();
+  }
+  
+  public restartCurrentEncounter(): void {
+    this.encounterManager.restartCurrentEncounter();
+  }
+  
+  public fullHealPlayer(): void {
+    this.playerCurrentHealth = this.playerMaxHealth;
+    this.updatePlayerHealthBar();
+  }
+  
+  public returnToNormalState(): void {
+    console.log('All encounters completed - returning to normal state');
+    // For now, just log - in future this would return to world map
   }
 }

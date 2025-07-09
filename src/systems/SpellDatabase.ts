@@ -32,9 +32,9 @@ export class SpellDatabase {
       discovered: true,
       effect: {
         type: 'damage',
-        value: 3,
+        value: 25,
         area: 'single',
-        description: '3 damage'
+        description: '25 damage'
       }
     });
     
@@ -46,11 +46,10 @@ export class SpellDatabase {
       difficulty: 1,
       discovered: true,
       effect: {
-        type: 'utility',
-        value: 2,
-        duration: 2,
+        type: 'healing',
+        value: 20,
         area: 'single',
-        description: '+2 attack for 2 turns'
+        description: '20 healing'
       }
     });
     
@@ -63,9 +62,9 @@ export class SpellDatabase {
       discovered: true,
       effect: {
         type: 'defensive',
-        value: 2,
+        value: 10,
         area: 'single',
-        description: '2 block + 1 damage'
+        description: '10 damage + 15 defense'
       }
     });
     
@@ -79,9 +78,9 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'damage',
-        value: 5,
+        value: 50,
         area: 'single',
-        description: '5 damage'
+        description: '50 damage'
       }
     });
     
@@ -93,11 +92,10 @@ export class SpellDatabase {
       difficulty: 2,
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
-        type: 'utility',
-        value: 4,
-        duration: 2,
+        type: 'healing',
+        value: 40,
         area: 'single',
-        description: '+4 attack for 2 turns'
+        description: '40 healing'
       }
     });
     
@@ -110,9 +108,9 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'defensive',
-        value: 3,
+        value: 20,
         area: 'single',
-        description: '3 block + 2 damage'
+        description: '20 damage + 30 defense'
       }
     });
     
@@ -126,10 +124,10 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'damage',
-        value: 3,
+        value: 25,
         duration: 1,
         area: 'single',
-        description: '3 damage + stun chance'
+        description: '25 damage + 20 healing'
       }
     });
     
@@ -142,10 +140,10 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'damage',
-        value: 3,
+        value: 35,
         duration: 2,
         area: 'single',
-        description: '3 damage + debuff for 2 turns'
+        description: '35 damage + 15 defense'
       }
     });
     
@@ -158,9 +156,9 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'healing',
-        value: 5,
+        value: 30,
         area: 'single',
-        description: '5 healing'
+        description: '10 damage + 20 healing + 15 defense'
       }
     });
     
@@ -174,9 +172,9 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'damage',
-        value: 12,
+        value: 75,
         area: 'large',
-        description: 'Deal 12 damage to all enemies'
+        description: '75 damage'
       }
     });
     
@@ -189,10 +187,10 @@ export class SpellDatabase {
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
         type: 'damage',
-        value: 8,
+        value: 25,
         duration: 1,
         area: 'large',
-        description: 'Deal 8 damage to all enemies, heal 4 health'
+        description: '25 damage + 20 healing'
       }
     });
     
@@ -222,9 +220,9 @@ export class SpellDatabase {
       discovered: true,
       effect: {
         type: 'utility',
-        value: 4,
+        value: 5,
         area: 'single',
-        description: '+4 materials'
+        description: '+5 materials'
       }
     });
   }

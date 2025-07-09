@@ -126,8 +126,8 @@ export class SpellEffectsSystem {
   }
   
   private showSpellEffect(spell: SpellRecipe, effectiveness: number): void {
-    // Create visual effect based on spell type
-    const effectContainer = this.scene.add.container(400, 200);
+    // Create visual effect based on spell type - position on enemy character
+    const effectContainer = this.scene.add.container(200, 360);
     
     // Base effect graphics
     const effect = this.scene.add.graphics();
