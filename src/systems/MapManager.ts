@@ -425,8 +425,24 @@ export class MapManager {
       // Hide the selection arrow
       this.hideSelectionArrow();
       
-      // Move to the selected node with animation
-      this.moveToNodeWithAnimation(selectedNodeId);
+      // Get the node data to determine how to handle it
+      const selectedNode = this.mapNodes.get(selectedNodeId);
+      if (selectedNode) {
+        const nodeData = selectedNode.getNodeData();
+        
+        // Handle different node types
+        if (nodeData.type === MapNodeType.ENCOUNTER) {
+          console.log(`MapManager: Arrow selected encounter node ${selectedNodeId}`);
+          // Move to the node first, then start encounter after animation
+          this.moveToNodeWithAnimation(selectedNodeId, () => {
+            console.log(`MapManager: Animation complete, starting encounter for ${selectedNodeId}`);
+            this.startEncounter(nodeData);
+          });
+        } else {
+          // For non-encounter nodes, just move normally
+          this.moveToNodeWithAnimation(selectedNodeId);
+        }
+      }
     }
   }
   
@@ -440,7 +456,7 @@ export class MapManager {
     }
   }
   
-  private moveToNodeWithAnimation(nodeId: string): void {
+  private moveToNodeWithAnimation(nodeId: string, onComplete?: () => void): void {
     if (this.isMoving || !this.characterIndicator) {
       return;
     }
@@ -468,15 +484,24 @@ export class MapManager {
       duration: 800,
       ease: 'Power2.easeInOut',
       onComplete: () => {
+        console.log(`MapManager: Animation complete for node ${nodeId}`);
+        
         // Update game state after animation completes
         this.moveToNode(nodeId);
         this.isMoving = false;
         
-        // Create selection arrow after movement is complete
-        this.updateArrowPosition();
-        this.scene.time.delayedCall(100, () => {
-          this.createSelectionArrow();
-        });
+        // Execute callback if provided (for encounters)
+        if (onComplete) {
+          console.log(`MapManager: Executing callback for node ${nodeId}`);
+          onComplete();
+        } else {
+          console.log(`MapManager: No callback, creating selection arrow for node ${nodeId}`);
+          // Create selection arrow after movement is complete (normal movement)
+          this.updateArrowPosition();
+          this.scene.time.delayedCall(100, () => {
+            this.createSelectionArrow();
+          });
+        }
       }
     });
   }
@@ -524,10 +549,53 @@ export class MapManager {
   private handleEncounterNode(nodeData: MapNodeData): void {
     console.log(`Starting encounter: ${nodeData.id} (Difficulty: ${nodeData.config.difficultyModifier})`);
     
-    // TODO: Integrate with encounter system
-    // For now, just move to the node and mark as completed
-    this.moveToNode(nodeData.id);
-    this.completeNode(nodeData.id);
+    // Move to the node first, then start encounter after animation
+    this.moveToNodeWithAnimation(nodeData.id, () => {
+      console.log(`MapManager: Animation complete, starting encounter for ${nodeData.id}`);
+      this.startEncounter(nodeData);
+    });
+  }
+  
+  private startEncounter(nodeData: MapNodeData): void {
+    // Get random enemy for the encounter based on difficulty
+    const enemyId = this.getRandomEnemyForDifficulty(nodeData.config.difficultyModifier);
+    
+    console.log(`MapManager: Starting encounter with enemy: ${enemyId} for node: ${nodeData.id}`);
+    console.log(`MapManager: Setting current player node to ${nodeData.id}`);
+    
+    // Update current player node to the encounter node before starting encounter
+    this.currentPlayerNode = nodeData.id;
+    
+    console.log(`MapManager: Fading out and switching to GameScene`);
+    
+    // Fade out and transition to GameScene
+    this.scene.cameras.main.fadeOut(800, 0, 0, 0);
+    this.scene.time.delayedCall(800, () => {
+      this.scene.scene.start('GameScene', {
+        encounterData: {
+          enemyId: enemyId,
+          nodeId: nodeData.id,
+          returnToMap: true
+        }
+      });
+    });
+  }
+  
+  private getRandomEnemyForDifficulty(difficultyModifier: number): string {
+    // Simple enemy selection based on difficulty
+    if (difficultyModifier <= 0.8) {
+      // Easy encounters
+      const easyEnemies = ['lizard', 'fox'];
+      return easyEnemies[Math.floor(Math.random() * easyEnemies.length)];
+    } else if (difficultyModifier <= 1.2) {
+      // Normal encounters  
+      const normalEnemies = ['fox', 'crane', 'lizard'];
+      return normalEnemies[Math.floor(Math.random() * normalEnemies.length)];
+    } else {
+      // Hard encounters
+      const hardEnemies = ['crane', 'fox'];
+      return hardEnemies[Math.floor(Math.random() * hardEnemies.length)];
+    }
   }
   
   private handleShopNode(nodeData: MapNodeData): void {
@@ -611,6 +679,40 @@ export class MapManager {
   
   public getAllNodes(): MapNode[] {
     return Array.from(this.mapNodes.values());
+  }
+  
+  public setCurrentPlayerNode(nodeId: string): void {
+    console.log(`MapManager: Setting current player node to ${nodeId}`);
+    
+    // Update the old current node state if it exists
+    if (this.currentPlayerNode) {
+      const oldNode = this.mapNodes.get(this.currentPlayerNode);
+      if (oldNode && !this.completedNodes.has(this.currentPlayerNode)) {
+        oldNode.setState(MapNodeState.AVAILABLE);
+      }
+    }
+    
+    // Set new current node
+    this.currentPlayerNode = nodeId;
+    const currentNode = this.mapNodes.get(nodeId);
+    if (currentNode) {
+      currentNode.setState(MapNodeState.CURRENT);
+    }
+    
+    // Update character position and available nodes
+    this.updateCharacterPosition();
+    this.updateAvailableNodes();
+  }
+
+  public completeEncounterNode(nodeId: string): void {
+    console.log(`MapManager: Completing encounter node ${nodeId}`);
+    console.log(`MapManager: Current player node is: ${this.currentPlayerNode}`);
+    
+    this.completeNode(nodeId);
+    
+    // Update character position to the completed node
+    console.log(`MapManager: Updating character position to current node: ${this.currentPlayerNode}`);
+    this.updateCharacterPosition();
   }
   
   private clearAllNodes(): void {

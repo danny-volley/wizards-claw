@@ -31,7 +31,7 @@ export class MapScene extends Phaser.Scene {
     console.log('MapScene: Assets loaded');
   }
   
-  create() {
+  create(data?: any) {
     console.log('MapScene: Creating map scene');
     
     // Create and position background
@@ -45,6 +45,18 @@ export class MapScene extends Phaser.Scene {
     
     // Create map nodes
     this.mapManager.createMapNodes();
+    
+    // Handle encounter completion if returning from GameScene
+    if (data && data.completeNodeId) {
+      console.log('MapScene: Completing node from encounter:', data.completeNodeId);
+      
+      // Set the player position to the completed encounter node before completing it
+      this.mapManager.setCurrentPlayerNode(data.completeNodeId);
+      this.mapManager.completeEncounterNode(data.completeNodeId);
+      
+      // Fade in from GameScene transition
+      this.cameras.main.fadeIn(800, 0, 0, 0);
+    }
     
     // Add instruction text
     this.add.text(this.scale.width / 2, 50, 'Map Scene - Click nodes to interact, Press ESC to return to game', {

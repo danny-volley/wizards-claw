@@ -133,9 +133,21 @@ export class EncounterManager {
     // Called when player closes the result window
     console.log('EncounterManager: onEncounterResultClosed called');
     
+    // Check if this was a map encounter before clearing
+    const wasMapEncounter = this.isMapEncounter;
+    const encounterResult = this.currentEncounter?.getResult();
+    
     // Clear the current encounter now that the result window is closed
     this.currentEncounter = null;
     this.isActive = false;
+    
+    // Handle map encounter completion
+    if (wasMapEncounter && encounterResult === EncounterResult.VICTORY) {
+      console.log('Map encounter completed successfully');
+      this.scene.onMapEncounterComplete();
+      this.isMapEncounter = false;
+      return;
+    }
     
     if (this.encounterQueue.length > 0) {
       // Start next encounter
@@ -147,6 +159,28 @@ export class EncounterManager {
       this.scene.returnToNormalState();
     }
   }
+  
+  public startSingleEncounter(enemyId: string): void {
+    console.log(`EncounterManager: Starting single encounter with ${enemyId}`);
+    
+    if (this.currentEncounter) {
+      console.warn('Cannot start new encounter while one is active');
+      return;
+    }
+    
+    // Clear any existing queue for map encounters
+    this.encounterQueue = [];
+    
+    // Create and start the encounter
+    this.currentEncounter = new CombatEncounter(this.scene, enemyId);
+    this.isActive = true;
+    this.isMapEncounter = true;
+    
+    console.log(`Starting map encounter with ${enemyId}`);
+    this.currentEncounter.start();
+  }
+  
+  private isMapEncounter: boolean = false;
   
   public restartCurrentEncounter(): void {
     if (!this.currentEncounter) return;

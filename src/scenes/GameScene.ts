@@ -112,7 +112,7 @@ export class GameScene extends Phaser.Scene {
     console.log('GameScene: Loading UI assets');
   }
 
-  create() {
+  create(data?: any) {
     console.log('GameScene create() started');
     
     try {
@@ -184,13 +184,22 @@ export class GameScene extends Phaser.Scene {
       // Initial game state
       this.gameState = 'selecting';
       
-      // Start first encounter automatically
-      this.encounterManager.startNextEncounter();
+      // Check if we have encounter data from map
+      if (data && data.encounterData) {
+        console.log('GameScene: Starting encounter from map data', data.encounterData);
+        this.startMapEncounter(data.encounterData);
+        
+        // Fade in from map transition
+        this.cameras.main.fadeIn(800, 0, 0, 0);
+      } else {
+        // Start first encounter automatically (default behavior)
+        this.encounterManager.startNextEncounter();
+      }
       
       // Add instructions - positioned in right bottom corner
-      this.add.text(1250, 690, 'Spacebar to choose', {
-        fontSize: '16px',
-        color: '#cccccc'
+      this.add.text(1250, 696, 'Spacebar to make a selection', {
+        fontSize: '20px',
+        color: '#ffffff'
       }).setOrigin(1, 1); // Right-aligned to bottom-right corner
       
       
@@ -1514,4 +1523,32 @@ export class GameScene extends Phaser.Scene {
     
     console.log('Map debug button created below campfire button');
   }
+  
+  private startMapEncounter(encounterData: any): void {
+    console.log('GameScene: Starting map encounter', encounterData);
+    
+    // Store the encounter data for later use
+    this.mapEncounterData = encounterData;
+    
+    // Create a single encounter for the map node
+    this.encounterManager.startSingleEncounter(encounterData.enemyId);
+  }
+  
+  public onMapEncounterComplete(): void {
+    console.log('GameScene: Map encounter completed');
+    
+    if (this.mapEncounterData) {
+      console.log('GameScene: Fading out and returning to map');
+      
+      // Fade out and return to map scene
+      this.cameras.main.fadeOut(800, 0, 0, 0);
+      this.time.delayedCall(800, () => {
+        this.scene.start('MapScene', {
+          completeNodeId: this.mapEncounterData.nodeId
+        });
+      });
+    }
+  }
+  
+  private mapEncounterData: any = null;
 }

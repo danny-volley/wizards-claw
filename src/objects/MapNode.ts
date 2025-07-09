@@ -74,34 +74,33 @@ export class MapNode extends Phaser.GameObjects.Container {
       case MapNodeState.LOCKED:
         this.nodeIcon.setTint(0x666666); // Dark gray
         this.nodeIcon.setAlpha(0.5);
-        this.setInteractive(false);
+        this.nodeIcon.disableInteractive();
         break;
         
       case MapNodeState.AVAILABLE:
         this.nodeIcon.clearTint();
         this.nodeIcon.setAlpha(1.0);
-        this.setInteractive(true);
+        this.nodeIcon.setInteractive();
         break;
         
       case MapNodeState.COMPLETED:
         this.nodeIcon.setTint(0x00ff00); // Green tint
         this.nodeIcon.setAlpha(0.8);
-        this.setInteractive(true);
+        this.nodeIcon.setInteractive();
         break;
         
       case MapNodeState.CURRENT:
         this.nodeIcon.clearTint();
         this.nodeIcon.setAlpha(1.0);
-        this.setInteractive(true);
+        this.nodeIcon.setInteractive();
         break;
     }
   }
   
   
   private setupInteraction() {
-    this.setSize(90, 90); // Interaction area matches icon size
-    
-    this.on('pointerover', () => {
+    // Set up event listeners for the icon (interactivity will be managed by updateNodeState)
+    this.nodeIcon.on('pointerover', () => {
       if (this.nodeData.state !== MapNodeState.LOCKED) {
         this.isHovered = true;
         this.nodeText.setVisible(true);
@@ -109,13 +108,13 @@ export class MapNode extends Phaser.GameObjects.Container {
       }
     });
     
-    this.on('pointerout', () => {
+    this.nodeIcon.on('pointerout', () => {
       this.isHovered = false;
       this.nodeText.setVisible(false);
       this.nodeIcon.setScale(this.baseScale); // Back to normal size
     });
     
-    this.on('pointerdown', () => {
+    this.nodeIcon.on('pointerdown', () => {
       if (this.nodeData.state === MapNodeState.AVAILABLE || 
           this.nodeData.state === MapNodeState.CURRENT) {
         this.handleNodeClick();
@@ -157,6 +156,11 @@ export class MapNode extends Phaser.GameObjects.Container {
   }
   
   public destroy(): void {
+    // Clean up node icon interactions
+    if (this.nodeIcon) {
+      this.nodeIcon.removeAllListeners();
+    }
+    
     super.destroy();
   }
 }
