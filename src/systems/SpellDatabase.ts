@@ -16,6 +16,7 @@ export interface SpellEffect {
   duration?: number; // For effects that last over time
   area?: 'single' | 'small' | 'large'; // For area effects
   description: string;
+  defense?: number; // For spells that provide defense in addition to their main effect
 }
 
 export class SpellDatabase {
@@ -56,15 +57,16 @@ export class SpellDatabase {
     this.addRecipe({
       id: 'shard',
       name: 'Shard',
-      description: 'A jagged stone that provides defense and damage',
+      description: 'A jagged stone that deals damage and provides defense',
       materials: [MaterialType.ROCK],
       difficulty: 1,
       discovered: true,
       effect: {
-        type: 'defensive',
-        value: 10,
+        type: 'damage',
+        value: 15,
         area: 'single',
-        description: '10 damage + 15 defense'
+        description: '15 damage + 15 defense',
+        defense: 15
       }
     });
     
@@ -102,15 +104,16 @@ export class SpellDatabase {
     this.addRecipe({
       id: 'strong_shard',
       name: 'Strong Shard',
-      description: 'Enhanced stone defense and offense',
+      description: 'Enhanced stone projectile that deals damage and provides defense',
       materials: [MaterialType.ROCK, MaterialType.ROCK],
       difficulty: 2,
       discovered: true, // Available for demo - would be unlocked via shop
       effect: {
-        type: 'defensive',
-        value: 20,
+        type: 'damage',
+        value: 15,
         area: 'single',
-        description: '20 damage + 30 defense'
+        description: '15 damage + 15 defense',
+        defense: 15
       }
     });
     

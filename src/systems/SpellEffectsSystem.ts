@@ -65,6 +65,20 @@ export class SpellEffectsSystem {
         break;
     }
     
+    // Handle additional defense effect for spells that provide it
+    if (spell.effect.defense) {
+      result.defense = Math.round(spell.effect.defense * effectMultiplier);
+      
+      // Update message for spells that have both damage and defense
+      if (result.damage) {
+        result.message = `${spell.name} deals ${result.damage} damage and provides ${result.defense} defense`;
+      } else if (result.healing) {
+        result.message = `${spell.name} heals ${result.healing} health and provides ${result.defense} defense`;
+      } else if (!result.defense && spell.effect.type === 'defensive') {
+        // Don't override if defense was already set by the switch case
+      }
+    }
+    
     // Add duration-based effects
     if (spell.effect.duration && spell.effect.duration > 0) {
       const activeEffect: ActiveEffect = {
