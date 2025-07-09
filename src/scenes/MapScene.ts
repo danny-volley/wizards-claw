@@ -59,7 +59,7 @@ export class MapScene extends Phaser.Scene {
     }
     
     // Add instruction text
-    this.add.text(this.scale.width / 2, 50, 'Press Spacebar to move', {
+    this.add.text(this.scale.width / 2, 50, 'Press Spacebar to select a destination', {
       fontSize: '18px',
       color: '#ffffff',
       fontStyle: 'bold',

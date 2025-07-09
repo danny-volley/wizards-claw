@@ -128,6 +128,20 @@ export class EncounterManager {
       this.currentEncounter.handlePlayerSpell(castResult);
     }
   }
+
+  public getEnemyActionHint(): string | null {
+    if (this.currentEncounter && this.currentEncounter instanceof CombatEncounter) {
+      return this.currentEncounter.getEnemyActionHint();
+    }
+    return null;
+  }
+
+  public getEnemyActionText(): string | null {
+    if (this.currentEncounter && this.currentEncounter instanceof CombatEncounter) {
+      return this.currentEncounter.getEnemyActionText();
+    }
+    return null;
+  }
   
   public onEncounterResultClosed(): void {
     // Called when player closes the result window

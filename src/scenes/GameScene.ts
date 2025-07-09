@@ -1091,14 +1091,14 @@ export class GameScene extends Phaser.Scene {
     if (this.turnIndicatorText) {
       if (isPlayerTurn) {
         // During player turn, show what the enemy might do next
-        const enemyPrediction = this.getRandomEnemyPrediction();
+        const enemyPrediction = this.encounterManager.getEnemyActionHint() || this.getRandomEnemyPrediction();
         this.turnIndicatorText.setText(enemyPrediction);
         this.turnIndicatorText.setColor('#ffffff');
         // Show crane during player turn
         this.crane.setVisible(true);
       } else {
         // During enemy turn, show what the enemy is actually doing
-        const enemyAction = this.getRandomEnemyAction();
+        const enemyAction = this.encounterManager.getEnemyActionText() || this.getRandomEnemyAction();
         this.turnIndicatorText.setText(enemyAction);
         this.turnIndicatorText.setColor('#ffffff');
         // Hide crane during enemy turn
