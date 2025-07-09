@@ -90,8 +90,10 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
   
   // Override destroy to clean up visual image
   public destroy(): void {
-    // Remove update listener
-    this.scene.events.off('update', this.updateVisualPosition, this);
+    // Remove update listener - check if scene still exists
+    if (this.scene && this.scene.events) {
+      this.scene.events.off('update', this.updateVisualPosition, this);
+    }
     
     if ((this as any).visualImage) {
       (this as any).visualImage.destroy();

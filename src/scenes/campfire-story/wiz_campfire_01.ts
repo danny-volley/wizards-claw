@@ -10,7 +10,7 @@ export interface DialogueLine {
 export const openingSceneDialogue: DialogueLine[] = [
   {
     speaker: "BUROK",
-    text: "The Grand Mound, eh? That's ambitious even for a badger, young one.",
+    text: "The Grand Mound, eh? That's an ambitious trek, even for a wizard.",
     action: "stirring the fire with a stick"
   },
   {
@@ -29,8 +29,8 @@ export const openingSceneDialogue: DialogueLine[] = [
     action: "patting her material pouch confidently"
   },
   {
-    speaker: "TUTORIAL",
-    text: "Yuvor reaches into her pouch and pulls out a twig and berry, making them glow with magical energy",
+    speaker: "",
+    text: "(Yuvor reaches into her pouch and pulls out a pebble and pinecone, making them glow with magical energy)",
     action: "spell demonstration"
   },
   {
@@ -45,11 +45,6 @@ export const openingSceneDialogue: DialogueLine[] = [
   },
   {
     speaker: "YUVOR",
-    text: "The monastery masters will see that this badger has what it takes.",
-    action: "shouldering her pack"
-  },
-  {
-    speaker: "YUVOR",
     text: "Fire, Leaf, Rock... let's see what the world has to teach me.",
     action: "begins walking toward the sunrise"
   }
@@ -57,7 +52,7 @@ export const openingSceneDialogue: DialogueLine[] = [
 
 export const sceneMetadata = {
   sceneId: "opening_campfire",
-  location: "Wayward Campfire - Lowland Meadows",
+  location: "Lowland Meadows Campfire",
   timeOfDay: "Pre-dawn",
   characters: ["YUVOR", "BUROK"],
   nextScene: "tutorial_material_gathering",

@@ -13,6 +13,7 @@ import { EncounterManager } from '../systems/EncounterManager';
 import { EncounterResultWindow } from '../ui/EncounterResultWindow';
 import { EncounterResult } from '../encounters/BaseEncounter';
 import { EnemyData } from '../data/EnemyData';
+import { CampfireManager } from '../systems/CampfireManager';
 
 export class GameScene extends Phaser.Scene {
   private inputSystem!: InputSystem;
@@ -38,6 +39,10 @@ export class GameScene extends Phaser.Scene {
   private encounterResultWindow!: EncounterResultWindow;
   private currentEnemyImage: Phaser.GameObjects.Image | null = null;
   private turnIndicatorText: Phaser.GameObjects.Text | null = null;
+  
+  // Campfire system
+  private campfireManager!: CampfireManager;
+  private campfireDebugButton!: Phaser.GameObjects.Container;
   
   // Health bar components
   private enemyHealthBack!: Phaser.GameObjects.Image;
@@ -134,6 +139,13 @@ export class GameScene extends Phaser.Scene {
       this.inputSystem = new InputSystem(this);
       console.log('Input system created');
       
+      // Initialize campfire system
+      this.campfireManager = CampfireManager.getInstance();
+      console.log('Campfire system initialized');
+      
+      // Create debug campfire button
+      this.createCampfireDebugButton();
+      
       // Initialize spell effects system
       this.spellEffectsSystem = new SpellEffectsSystem(this);
       console.log('Spell effects system created');
@@ -174,6 +186,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: '16px',
         color: '#cccccc'
       }).setOrigin(1, 1); // Right-aligned to bottom-right corner
+      
       
       console.log('GameScene create() completed successfully');
       
@@ -821,8 +834,12 @@ export class GameScene extends Phaser.Scene {
     
     // Destroy the used materials (make them disappear)
     usedMaterials.forEach(material => {
-      if (material) {
-        material.destroy();
+      if (material && material.destroy) {
+        try {
+          material.destroy();
+        } catch (error) {
+          console.warn('Error destroying material during spell casting:', error);
+        }
       }
     });
     
@@ -1233,5 +1250,204 @@ export class GameScene extends Phaser.Scene {
   public returnToNormalState(): void {
     console.log('All encounters completed - returning to normal state');
     // For now, just log - in future this would return to world map
+  }
+  
+  shutdown(): void {
+    console.log('GameScene: Shutting down...');
+    
+    // Safely clean up materials
+    if (this.materialsGroup) {
+      this.materialsGroup.children.entries.forEach((material: any) => {
+        if (material && material.destroy) {
+          try {
+            material.destroy();
+          } catch (error) {
+            console.warn('Error destroying material during shutdown:', error);
+          }
+        }
+      });
+      this.materialsGroup.clear();
+    }
+    
+    // Clean up any other game objects that might have event listeners
+    if (this.campfireDebugButton) {
+      this.campfireDebugButton.destroy();
+    }
+    
+    console.log('GameScene: Shutdown complete');
+  }
+  
+  private createCampfireDebugButton(): void {
+    // Create debug button container
+    this.campfireDebugButton = this.add.container(50, 50);
+    
+    // Button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillStyle(0x8B4513, 0.8); // Brown color for campfire theme
+    buttonBg.fillRoundedRect(0, 0, 120, 40, 8);
+    buttonBg.lineStyle(2, 0xFFD700); // Gold border
+    buttonBg.strokeRoundedRect(0, 0, 120, 40, 8);
+    
+    // Button text
+    const buttonText = this.add.text(60, 20, '🔥 Campfire', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Add to container
+    this.campfireDebugButton.add([buttonBg, buttonText]);
+    
+    // Make it interactive
+    this.campfireDebugButton.setSize(120, 40);
+    this.campfireDebugButton.setInteractive();
+    
+    // Add hover effects
+    this.campfireDebugButton.on('pointerover', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0xA0522D, 0.9); // Slightly lighter brown on hover
+      buttonBg.fillRoundedRect(0, 0, 120, 40, 8);
+      buttonBg.lineStyle(2, 0xFFD700);
+      buttonBg.strokeRoundedRect(0, 0, 120, 40, 8);
+    });
+    
+    this.campfireDebugButton.on('pointerout', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0x8B4513, 0.8); // Back to original brown
+      buttonBg.fillRoundedRect(0, 0, 120, 40, 8);
+      buttonBg.lineStyle(2, 0xFFD700);
+      buttonBg.strokeRoundedRect(0, 0, 120, 40, 8);
+    });
+    
+    // Click handler - opens campfire scene selection
+    this.campfireDebugButton.on('pointerdown', () => {
+      this.showCampfireSelectionMenu();
+    });
+    
+    // Add to UI layer with high depth
+    this.campfireDebugButton.setDepth(1000);
+    
+    console.log('Campfire debug button created at top-left');
+  }
+  
+  private showCampfireSelectionMenu(): void {
+    // Create selection menu overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.7);
+    overlay.fillRect(0, 0, this.scale.width, this.scale.height);
+    overlay.setDepth(1500);
+    
+    // Menu background
+    const menuBg = this.add.graphics();
+    menuBg.fillStyle(0x2C1810, 0.95); // Dark brown background
+    menuBg.fillRoundedRect(this.scale.width/2 - 200, this.scale.height/2 - 150, 400, 300, 15);
+    menuBg.lineStyle(3, 0xFFD700);
+    menuBg.strokeRoundedRect(this.scale.width/2 - 200, this.scale.height/2 - 150, 400, 300, 15);
+    menuBg.setDepth(1510);
+    
+    // Menu title
+    const menuTitle = this.add.text(this.scale.width/2, this.scale.height/2 - 100, 'Select Campfire Scene', {
+      fontSize: '24px',
+      color: '#FFD700',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(1520);
+    
+    // Campfire scene options
+    const campfireScenes = [
+      { id: 'opening_campfire', name: '1. Opening - Dawn with Burok', description: 'Yuvor begins her journey' },
+      { id: 'second_campfire', name: '2. Thornwood - Evening with Thurm', description: 'Meeting a fellow traveler' },
+      { id: 'lizard_campfire', name: '3. Craglands - Night with Sythara', description: 'Wisdom from a lizard sage' }
+    ];
+    
+    const menuItems: Phaser.GameObjects.Container[] = [];
+    
+    campfireScenes.forEach((scene, index) => {
+      const yPos = this.scale.height/2 - 40 + (index * 60);
+      
+      // Button container
+      const buttonContainer = this.add.container(this.scale.width/2, yPos);
+      
+      // Button background
+      const sceneBg = this.add.graphics();
+      sceneBg.fillStyle(0x8B4513, 0.8);
+      sceneBg.fillRoundedRect(-180, -20, 360, 40, 8);
+      sceneBg.lineStyle(1, 0xFFD700, 0.5);
+      sceneBg.strokeRoundedRect(-180, -20, 360, 40, 8);
+      
+      // Scene name
+      const sceneName = this.add.text(0, -5, scene.name, {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+      
+      // Scene description
+      const sceneDesc = this.add.text(0, 10, scene.description, {
+        fontSize: '12px',
+        color: '#cccccc',
+        fontStyle: 'italic'
+      }).setOrigin(0.5);
+      
+      buttonContainer.add([sceneBg, sceneName, sceneDesc]);
+      buttonContainer.setSize(360, 40);
+      buttonContainer.setInteractive();
+      buttonContainer.setDepth(1520);
+      
+      // Hover effects
+      buttonContainer.on('pointerover', () => {
+        sceneBg.clear();
+        sceneBg.fillStyle(0xA0522D, 0.9);
+        sceneBg.fillRoundedRect(-180, -20, 360, 40, 8);
+        sceneBg.lineStyle(2, 0xFFD700);
+        sceneBg.strokeRoundedRect(-180, -20, 360, 40, 8);
+      });
+      
+      buttonContainer.on('pointerout', () => {
+        sceneBg.clear();
+        sceneBg.fillStyle(0x8B4513, 0.8);
+        sceneBg.fillRoundedRect(-180, -20, 360, 40, 8);
+        sceneBg.lineStyle(1, 0xFFD700, 0.5);
+        sceneBg.strokeRoundedRect(-180, -20, 360, 40, 8);
+      });
+      
+      // Click handler
+      buttonContainer.on('pointerdown', () => {
+        console.log(`Starting campfire scene: ${scene.id}`);
+        this.campfireManager.startCampfireScene(this, scene.id);
+        // Clean up menu
+        this.cleanupCampfireMenu(overlay, menuBg, menuTitle, menuItems);
+      });
+      
+      menuItems.push(buttonContainer);
+    });
+    
+    // Close button
+    const closeButton = this.add.text(this.scale.width/2, this.scale.height/2 + 120, 'Close', {
+      fontSize: '16px',
+      color: '#ff6666',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(1520);
+    
+    closeButton.setInteractive();
+    closeButton.on('pointerdown', () => {
+      this.cleanupCampfireMenu(overlay, menuBg, menuTitle, menuItems);
+    });
+    
+    // Store references for cleanup
+    (overlay as any).menuItems = menuItems;
+    (overlay as any).closeButton = closeButton;
+  }
+  
+  private cleanupCampfireMenu(overlay: Phaser.GameObjects.Graphics, menuBg: Phaser.GameObjects.Graphics, 
+                              menuTitle: Phaser.GameObjects.Text, menuItems: Phaser.GameObjects.Container[]): void {
+    overlay.destroy();
+    menuBg.destroy();
+    menuTitle.destroy();
+    menuItems.forEach(item => item.destroy());
+    
+    // Clean up close button if it exists
+    if ((overlay as any).closeButton) {
+      (overlay as any).closeButton.destroy();
+    }
   }
 }
