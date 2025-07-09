@@ -44,6 +44,9 @@ export class GameScene extends Phaser.Scene {
   private campfireManager!: CampfireManager;
   private campfireDebugButton!: Phaser.GameObjects.Container;
   
+  // Map system
+  private mapDebugButton!: Phaser.GameObjects.Container;
+  
   // Health bar components
   private enemyHealthBack!: Phaser.GameObjects.Image;
   private enemyHealthFront!: Phaser.GameObjects.Image;
@@ -145,6 +148,9 @@ export class GameScene extends Phaser.Scene {
       
       // Create debug campfire button
       this.createCampfireDebugButton();
+      
+      // Create debug map button
+      this.createMapDebugButton();
       
       // Initialize spell effects system
       this.spellEffectsSystem = new SpellEffectsSystem(this);
@@ -1274,6 +1280,10 @@ export class GameScene extends Phaser.Scene {
       this.campfireDebugButton.destroy();
     }
     
+    if (this.mapDebugButton) {
+      this.mapDebugButton.destroy();
+    }
+    
     console.log('GameScene: Shutdown complete');
   }
   
@@ -1449,5 +1459,59 @@ export class GameScene extends Phaser.Scene {
     if ((overlay as any).closeButton) {
       (overlay as any).closeButton.destroy();
     }
+  }
+  
+  private createMapDebugButton(): void {
+    // Create debug button container positioned below campfire button
+    this.mapDebugButton = this.add.container(50, 100);
+    
+    // Button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillStyle(0x4A5D3A, 0.8); // Green color for map theme
+    buttonBg.fillRoundedRect(0, 0, 120, 40, 8);
+    buttonBg.lineStyle(2, 0xD4B03A); // Gold border
+    buttonBg.strokeRoundedRect(0, 0, 120, 40, 8);
+    
+    // Button text
+    const buttonText = this.add.text(60, 20, '🗺️ Map', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Add to container
+    this.mapDebugButton.add([buttonBg, buttonText]);
+    
+    // Make it interactive
+    this.mapDebugButton.setSize(120, 40);
+    this.mapDebugButton.setInteractive();
+    
+    // Add hover effects
+    this.mapDebugButton.on('pointerover', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0x5B7A4A, 0.9); // Slightly lighter green on hover
+      buttonBg.fillRoundedRect(0, 0, 120, 40, 8);
+      buttonBg.lineStyle(2, 0xD4B03A);
+      buttonBg.strokeRoundedRect(0, 0, 120, 40, 8);
+    });
+    
+    this.mapDebugButton.on('pointerout', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0x4A5D3A, 0.8); // Back to original green
+      buttonBg.fillRoundedRect(0, 0, 120, 40, 8);
+      buttonBg.lineStyle(2, 0xD4B03A);
+      buttonBg.strokeRoundedRect(0, 0, 120, 40, 8);
+    });
+    
+    // Click handler - opens map scene
+    this.mapDebugButton.on('pointerdown', () => {
+      console.log('Map button pressed - starting map scene');
+      this.scene.start('MapScene');
+    });
+    
+    // Add to UI layer with high depth
+    this.mapDebugButton.setDepth(1000);
+    
+    console.log('Map debug button created below campfire button');
   }
 }
