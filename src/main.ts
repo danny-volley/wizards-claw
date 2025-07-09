@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { StartScene } from './scenes/StartScene';
 import { GameScene } from './scenes/GameScene';
 import { CampfireScene } from './scenes/CampfireScene';
 import { MapScene } from './scenes/MapScene';
@@ -22,7 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false // Disable physics debug visualization
     }
   },
-  scene: [GameScene, CampfireScene, MapScene]
+  scene: [StartScene, GameScene, CampfireScene, MapScene]
 };
 
 const game = new Phaser.Game(config);

@@ -45,7 +45,7 @@ export const sceneMetadata = {
   location: "Thornwood Edge Campfire",
   timeOfDay: "Evening",
   characters: ["YUVOR", "THURM"],
-  nextScene: "continue_journey",
+  nextScene: "StartScene",
   backgroundMusic: "peaceful_evening",
   environmentSound: "distant_forest_sounds"
 };

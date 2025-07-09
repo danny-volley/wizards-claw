@@ -1,5 +1,6 @@
 import { MapNode, MapNodeData, MapNodeState } from '../objects/MapNode';
 import { MapNodeType, getNodeConfig, createCustomNodeConfig, ENCOUNTER_VARIANTS } from '../data/MapNodeConfig';
+import { CampfireManager } from './CampfireManager';
 
 export class MapManager {
   private scene: Phaser.Scene;
@@ -438,8 +439,15 @@ export class MapManager {
             console.log(`MapManager: Animation complete, starting encounter for ${selectedNodeId}`);
             this.startEncounter(nodeData);
           });
+        } else if (nodeData.type === MapNodeType.CAMPFIRE && selectedNodeId === 'end_campfire') {
+          console.log(`MapManager: Arrow selected end campfire node ${selectedNodeId}`);
+          // Move to the node first, then start campfire scene after animation
+          this.moveToNodeWithAnimation(selectedNodeId, () => {
+            console.log(`MapManager: Animation complete, starting campfire scene for ${selectedNodeId}`);
+            this.startCampfireScene(nodeData);
+          });
         } else {
-          // For non-encounter nodes, just move normally
+          // For other nodes, just move normally
           this.moveToNodeWithAnimation(selectedNodeId);
         }
       }
@@ -539,11 +547,34 @@ export class MapManager {
   private handleCampfireNode(nodeData: MapNodeData): void {
     console.log(`Activating campfire: ${nodeData.id}`);
     
-    // For now, just move to the node
-    this.moveToNode(nodeData.id);
+    // Check if this is the end campfire node
+    if (nodeData.id === 'end_campfire') {
+      console.log(`MapManager: Clicked end campfire, starting second campfire scene`);
+      
+      // Move to the node first, then start campfire scene after animation
+      this.moveToNodeWithAnimation(nodeData.id, () => {
+        console.log(`MapManager: Animation complete, starting campfire scene for ${nodeData.id}`);
+        this.startCampfireScene(nodeData);
+      });
+    } else {
+      // For other campfire nodes, just move to them
+      this.moveToNode(nodeData.id);
+    }
+  }
+  
+  private startCampfireScene(nodeData: MapNodeData): void {
+    console.log(`MapManager: Starting campfire scene for ${nodeData.id}`);
     
-    // TODO: Integrate with campfire system
-    // this.scene.scene.start('CampfireScene', campfireData);
+    // Update current player node to the campfire node
+    this.currentPlayerNode = nodeData.id;
+    
+    // Fade out and transition to CampfireScene
+    this.scene.cameras.main.fadeOut(800, 0, 0, 0);
+    this.scene.time.delayedCall(800, () => {
+      // Use CampfireManager to start the second campfire scene
+      const campfireManager = CampfireManager.getInstance();
+      campfireManager.startCampfireScene(this.scene, 'second_campfire');
+    });
   }
   
   private handleEncounterNode(nodeData: MapNodeData): void {

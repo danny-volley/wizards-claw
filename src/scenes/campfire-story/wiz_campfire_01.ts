@@ -55,7 +55,7 @@ export const sceneMetadata = {
   location: "Lowland Meadows Campfire",
   timeOfDay: "Pre-dawn",
   characters: ["YUVOR", "BUROK"],
-  nextScene: "tutorial_material_gathering",
+  nextScene: "MapScene",
   backgroundMusic: "campfire_ambient",
   environmentSound: "crackling_fire"
 };

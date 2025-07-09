@@ -278,7 +278,7 @@ export class CampfireScene extends Phaser.Scene {
       this.time.delayedCall(1000, () => {
         // Use scene.restart instead of scene.start to avoid cleanup issues
         this.scene.stop('CampfireScene');
-        this.scene.start('GameScene');
+        this.scene.start(this.sceneData.nextScene);
       });
     }
   }
