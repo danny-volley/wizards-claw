@@ -24,6 +24,7 @@ export class MapNode extends Phaser.GameObjects.Container {
   private nodeData: MapNodeData;
   private nodeIcon: Phaser.GameObjects.Image;
   private nodeText: Phaser.GameObjects.Text;
+  private difficultyIndicators: Phaser.GameObjects.Graphics[] = [];
   private isHovered: boolean = false;
   private baseScale: number = 1;
   
@@ -67,6 +68,11 @@ export class MapNode extends Phaser.GameObjects.Container {
     this.nodeText.setOrigin(0.5);
     this.nodeText.setVisible(false);
     this.add(this.nodeText);
+
+    // Create difficulty indicators for encounter nodes
+    if (this.nodeData.type === MapNodeType.ENCOUNTER) {
+      this.createDifficultyIndicators();
+    }
   }
   
   private updateNodeState() {
@@ -97,6 +103,53 @@ export class MapNode extends Phaser.GameObjects.Container {
     }
   }
   
+  private createDifficultyIndicators() {
+    // Get difficulty level (1-4 scale)
+    const difficulty = this.getDifficultyLevel();
+    
+    // Create 4 difficulty slash marks positioned below the icon
+    const markWidth = 12; // Bigger width
+    const markHeight = 16; // Bigger height for diagonal
+    const markSpacing = 4; // More spacing for bigger marks
+    const totalWidth = (markWidth * 4) + (markSpacing * 3);
+    const startX = -totalWidth / 2;
+    const markY = 45; // Position lower below the icon
+    
+    for (let i = 0; i < 4; i++) {
+      const mark = this.scene.add.graphics();
+      const markX = startX + (i * (markWidth + markSpacing));
+      
+      // Determine color based on difficulty level
+      const isFilled = i < difficulty;
+      const color = isFilled ? 0xFF0000 : 0x333333; // Red for filled, dark grey for empty
+      
+      mark.lineStyle(5, color); // 5px thick lines (60% thicker: 3 * 1.6 ≈ 5)
+      
+      // Draw diagonal slash from bottom-left to top-right
+      mark.beginPath();
+      mark.moveTo(markX, markY + markHeight); // Bottom-left
+      mark.lineTo(markX + markWidth, markY); // Top-right
+      mark.strokePath();
+      
+      this.difficultyIndicators.push(mark);
+      this.add(mark);
+    }
+  }
+
+  private getDifficultyLevel(): number {
+    // Convert difficulty modifier to 1-4 scale
+    const difficultyModifier = this.getDifficulty();
+    
+    if (difficultyModifier <= 0.8) {
+      return 1; // Easy
+    } else if (difficultyModifier <= 1.0) {
+      return 2; // Normal
+    } else if (difficultyModifier <= 1.5) {
+      return 3; // Hard
+    } else {
+      return 4; // Very Hard
+    }
+  }
   
   private setupInteraction() {
     // Set up event listeners for the icon (interactivity will be managed by updateNodeState)
@@ -160,6 +213,12 @@ export class MapNode extends Phaser.GameObjects.Container {
     if (this.nodeIcon) {
       this.nodeIcon.removeAllListeners();
     }
+    
+    // Clean up difficulty indicators
+    this.difficultyIndicators.forEach(indicator => {
+      indicator.destroy();
+    });
+    this.difficultyIndicators = [];
     
     super.destroy();
   }

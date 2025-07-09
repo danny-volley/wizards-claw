@@ -59,7 +59,7 @@ export class MapScene extends Phaser.Scene {
     }
     
     // Add instruction text
-    this.add.text(this.scale.width / 2, 50, 'Map Scene - Click nodes to interact, Press ESC to return to game', {
+    this.add.text(this.scale.width / 2, 50, 'Press Spacebar to move', {
       fontSize: '18px',
       color: '#ffffff',
       fontStyle: 'bold',

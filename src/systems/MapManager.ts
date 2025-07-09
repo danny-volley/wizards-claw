@@ -114,16 +114,16 @@ export class MapManager {
         x: 720,
         y: 360,
         customName: 'Traveling Merchant',
-        connectedNodes: ['encounter_3', 'treasure_1']
+        connectedNodes: ['encounter_3', 'hazard_1']
       },
       
-      // Treasure node (optional path)
+      // Hazard node (optional path)
       {
-        id: 'treasure_1',
-        type: MapNodeType.TREASURE,
+        id: 'hazard_1',
+        type: MapNodeType.HAZARD,
         x: 990,
         y: 250,
-        customName: 'Hidden Cache',
+        customName: 'Dangerous Path',
         connectedNodes: ['end_campfire']
       },
       
