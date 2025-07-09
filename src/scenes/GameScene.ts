@@ -29,6 +29,22 @@ export class GameScene extends Phaser.Scene {
   private spellWindowX!: number;
   private spellDisplayElements: Phaser.GameObjects.GameObject[] = []; // Track spell elements for clearing
   
+  // Health bar components
+  private enemyHealthBack!: Phaser.GameObjects.Image;
+  private enemyHealthFront!: Phaser.GameObjects.Image;
+  private enemyHealthText!: Phaser.GameObjects.Text;
+  private enemyHealthNumber!: Phaser.GameObjects.Text;
+  private playerHealthBack!: Phaser.GameObjects.Image;
+  private playerHealthFront!: Phaser.GameObjects.Image;
+  private playerHealthText!: Phaser.GameObjects.Text;
+  private playerHealthNumber!: Phaser.GameObjects.Text;
+  
+  // Health values
+  private enemyMaxHealth: number = 100;
+  private enemyCurrentHealth: number = 100;
+  private playerMaxHealth: number = 100;
+  private playerCurrentHealth: number = 100;
+  
   // Spell window dimensions - shared constants
   private readonly SPELL_WINDOW_WIDTH = 300;
   private readonly SPELL_WINDOW_PADDING = 20;
@@ -57,6 +73,13 @@ export class GameScene extends Phaser.Scene {
     // Load character assets
     this.load.image('char_burok', 'src/assets/characters/wiz_char_burok.png');
     this.load.image('char_yuvor', 'src/assets/characters/wiz_char_yuvor.png');
+    
+    // Load enemy assets
+    this.load.image('enemy_lizard', 'src/assets/enemies/wiz_battle_lizard.png');
+    
+    // Load health bar assets
+    this.load.image('health_back', 'src/assets/ui/wiz_ui_health_back.png');
+    this.load.image('health_front', 'src/assets/ui/wiz_ui_health_front.png');
     
     console.log('GameScene: Loading UI assets');
   }
@@ -166,35 +189,118 @@ export class GameScene extends Phaser.Scene {
     this.spellArrow = new SpellArrow(this, this.spellWindowX, 360);
     this.createSpellMenu();
     
-    // Create combat area placeholder (left side)
+    // Create combat area with enemy
     this.createCombatArea();
   }
   
-  
   private createCombatArea() {
-    // Left side combat area placeholder - positioned for 1280x720
-    const combatArea = this.add.container(200, 360);
+    // Create enemy image on the left side
+    const enemyImage = this.add.image(200, 360, 'enemy_lizard');
+    enemyImage.setOrigin(0.5, 0.5); // Center the image
+    enemyImage.setScale(0.35); // Reduced by 30% from 0.5 to 0.35
     
-    // Background
-    const combatBg = this.add.graphics();
-    combatBg.fillStyle(0x2a2a2a);
-    combatBg.fillRoundedRect(-100, -100, 200, 200, 10);
-    combatBg.lineStyle(2, 0x444444);
-    combatBg.strokeRoundedRect(-100, -100, 200, 200, 10);
-    combatArea.add(combatBg);
+    // Create enemy health bar above the enemy
+    this.createEnemyHealthBar();
     
-    // Player and enemy placeholders
-    const playerText = this.add.text(0, 60, 'You', {
-      fontSize: '18px',
+    // Create player health bar at the bottom
+    this.createPlayerHealthBar();
+    
+    // TODO: This will be dynamic based on the encounter
+    // For now using wiz_battle_lizard as placeholder
+  }
+  
+  private createEnemyHealthBar() {
+    // Position higher on the screen toward the top, centered with enemy
+    const healthBarX = 200; // Centered with enemy character
+    const healthBarY = 100; // Much higher, toward the top
+    
+    // Create background (back asset)
+    this.enemyHealthBack = this.add.image(healthBarX, healthBarY, 'health_back');
+    this.enemyHealthBack.setOrigin(0.5, 0.5);
+    this.enemyHealthBack.setScale(0.25); // Scaled down to ~200px wide
+    
+    // Create foreground (front asset) - this will scale with health
+    this.enemyHealthFront = this.add.image(healthBarX, healthBarY, 'health_front');
+    this.enemyHealthFront.setOrigin(0.5, 0.5);
+    this.enemyHealthFront.setScale(0.25); // Match background scale
+    
+    // Add "Opponent" text in the middle of the health bar
+    this.enemyHealthText = this.add.text(healthBarX, healthBarY, 'Opponent', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    });
+    this.enemyHealthText.setOrigin(0.5, 0.5);
+    
+    // Add health number display
+    this.enemyHealthNumber = this.add.text(healthBarX + 80, healthBarY, '100', {
+      fontSize: '12px',
       color: '#ffffff'
-    }).setOrigin(0.5);
-    combatArea.add(playerText);
+    });
+    this.enemyHealthNumber.setOrigin(0.5, 0.5);
     
-    const enemyText = this.add.text(0, -60, 'Slimy Toad', {
-      fontSize: '18px',
+    // Update health display
+    this.updateEnemyHealthBar();
+  }
+  
+  private createPlayerHealthBar() {
+    // Position at the bottom of the screen, centered with enemy
+    const healthBarX = 200; // Centered with enemy character
+    const healthBarY = 680; // Bottom of screen
+    
+    // Create background (back asset)
+    this.playerHealthBack = this.add.image(healthBarX, healthBarY, 'health_back');
+    this.playerHealthBack.setOrigin(0.5, 0.5);
+    this.playerHealthBack.setScale(0.25); // Scaled down to ~200px wide
+    
+    // Create foreground (front asset) - this will scale with health
+    this.playerHealthFront = this.add.image(healthBarX, healthBarY, 'health_front');
+    this.playerHealthFront.setOrigin(0.5, 0.5);
+    this.playerHealthFront.setScale(0.25); // Match background scale
+    
+    // Add "Yuvor" text in the middle of the health bar
+    this.playerHealthText = this.add.text(healthBarX, healthBarY, 'Yuvor', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    });
+    this.playerHealthText.setOrigin(0.5, 0.5);
+    
+    // Add health number display
+    this.playerHealthNumber = this.add.text(healthBarX + 80, healthBarY, '100', {
+      fontSize: '12px',
       color: '#ffffff'
-    }).setOrigin(0.5);
-    combatArea.add(enemyText);
+    });
+    this.playerHealthNumber.setOrigin(0.5, 0.5);
+    
+    // Update health display
+    this.updatePlayerHealthBar();
+  }
+  
+  private updateEnemyHealthBar() {
+    if (this.enemyHealthFront) {
+      // Scale the front image based on current health percentage
+      const healthPercentage = this.enemyCurrentHealth / this.enemyMaxHealth;
+      this.enemyHealthFront.setScale(0.25 * healthPercentage, 0.25); // Scale width only
+    }
+    
+    // Update the health number display
+    if (this.enemyHealthNumber) {
+      this.enemyHealthNumber.setText(this.enemyCurrentHealth.toString());
+    }
+  }
+  
+  private updatePlayerHealthBar() {
+    if (this.playerHealthFront) {
+      // Scale the front image based on current health percentage
+      const healthPercentage = this.playerCurrentHealth / this.playerMaxHealth;
+      this.playerHealthFront.setScale(0.25 * healthPercentage, 0.25); // Scale width only
+    }
+    
+    // Update the health number display
+    if (this.playerHealthNumber) {
+      this.playerHealthNumber.setText(this.playerCurrentHealth.toString());
+    }
   }
   
   private createSpellMenu() {
