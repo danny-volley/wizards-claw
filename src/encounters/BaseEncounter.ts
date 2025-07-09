@@ -52,9 +52,11 @@ export abstract class BaseEncounter {
       
       // Check victory/defeat conditions
       if (this.checkVictoryCondition()) {
+        console.log('BaseEncounter: Victory condition triggered, moving to RESOLUTION');
         this.result = EncounterResult.VICTORY;
         this.state = EncounterState.RESOLUTION;
       } else if (this.checkDefeatCondition()) {
+        console.log('BaseEncounter: Defeat condition triggered, moving to RESOLUTION');
         this.result = EncounterResult.DEFEAT;
         this.state = EncounterState.RESOLUTION;
       }

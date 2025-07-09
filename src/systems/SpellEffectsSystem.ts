@@ -26,7 +26,6 @@ export class SpellEffectsSystem {
   private scene: Phaser.Scene;
   private activeEffects: ActiveEffect[] = [];
   private effectId = 0;
-  private twoMaterialSpellsCast = 0;
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -82,16 +81,7 @@ export class SpellEffectsSystem {
       result.effects.push(activeEffect);
     }
     
-    // Track 2-material spell progression for third slot unlock
-    if (spell.materials.length === 2) {
-      this.twoMaterialSpellsCast++;
-      result.message += ` (2-material spells cast: ${this.twoMaterialSpellsCast}/3)`;
-      
-      // Unlock third slot after casting 3 different 2-material spells
-      if (this.twoMaterialSpellsCast >= 3) {
-        this.scene.events.emit('unlockThirdSlot');
-      }
-    }
+    // Third slot unlock functionality removed - will be unlocked through different mechanism
     
     // Show visual effect
     this.showSpellEffect(spell, effectMultiplier);
@@ -121,9 +111,7 @@ export class SpellEffectsSystem {
     this.activeEffects = [];
   }
   
-  public getTwoMaterialSpellsCount(): number {
-    return this.twoMaterialSpellsCast;
-  }
+  // getTwoMaterialSpellsCount method removed - no longer tracking 2-material spell count
   
   private showSpellEffect(spell: SpellRecipe, effectiveness: number): void {
     // Create visual effect based on spell type - position on enemy character

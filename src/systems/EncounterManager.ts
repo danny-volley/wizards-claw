@@ -69,6 +69,7 @@ export class EncounterManager {
     
     // Check if encounter moved to resolution phase
     if (this.currentEncounter.getState() === EncounterState.RESOLUTION) {
+      console.log('EncounterManager: Encounter moved to RESOLUTION, handling...');
       this.handleEncounterResolution();
     }
   }
@@ -110,15 +111,16 @@ export class EncounterManager {
     // Mark encounter as completed
     this.completedEncounters.push(this.currentEncounter.constructor.name);
     
-    // Complete the encounter
+    // Complete the encounter but don't start next one yet
     this.currentEncounter.complete();
-    this.currentEncounter = null;
-    this.isActive = false;
     
     // Handle full healing after encounter
     if (result === EncounterResult.VICTORY) {
       this.scene.fullHealPlayer();
     }
+    
+    // Don't clear currentEncounter and isActive yet - wait for player to close result window
+    // This prevents the next encounter from starting immediately
   }
   
   public handlePlayerSpell(spell: any): void {
@@ -129,8 +131,15 @@ export class EncounterManager {
   
   public onEncounterResultClosed(): void {
     // Called when player closes the result window
+    console.log('EncounterManager: onEncounterResultClosed called');
+    
+    // Clear the current encounter now that the result window is closed
+    this.currentEncounter = null;
+    this.isActive = false;
+    
     if (this.encounterQueue.length > 0) {
       // Start next encounter
+      console.log('Starting next encounter...');
       this.startNextEncounter();
     } else {
       // No more encounters - return to normal game state

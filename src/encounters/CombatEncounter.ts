@@ -146,6 +146,12 @@ export class CombatEncounter extends BaseEncounter {
       this.scene.showPlayerAttackEffect(damage);
       this.scene.showDamageEffect(damage, true); // true = damage to enemy
       console.log(`${spell.name} deals ${damage} damage to ${this.enemyData.displayName}!`);
+      console.log(`Enemy health: ${this.enemyCurrentHealth}/${this.enemyData.maxHealth}`);
+      
+      // Check victory immediately after damage
+      if (this.enemyCurrentHealth <= 0) {
+        console.log('Enemy defeated! Should trigger victory...');
+      }
     }
     
     if (healing > 0) {
@@ -189,7 +195,11 @@ export class CombatEncounter extends BaseEncounter {
   }
   
   checkVictoryCondition(): boolean {
-    return this.enemyCurrentHealth <= 0;
+    const victory = this.enemyCurrentHealth <= 0;
+    if (victory) {
+      console.log('checkVictoryCondition: Victory condition met!');
+    }
+    return victory;
   }
   
   checkDefeatCondition(): boolean {

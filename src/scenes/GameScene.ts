@@ -77,6 +77,14 @@ export class GameScene extends Phaser.Scene {
     this.load.image('material_fire', 'src/assets/ui/wiz_material_fire.png');
     this.load.image('material_leaf', 'src/assets/ui/wiz_material_leaf.png');
     this.load.image('material_rock', 'src/assets/ui/wiz_material_rock.png');
+    
+    // Load small material icons for spell lists
+    this.load.image('material_fire_small', 'src/assets/ui/wiz_material_fire_small.png');
+    this.load.image('material_leaf_small', 'src/assets/ui/wiz_material_leaf_small.png');
+    this.load.image('material_rock_small', 'src/assets/ui/wiz_material_rock_small.png');
+    
+    // Load Gather spell icon
+    this.load.image('gather_icon', 'src/assets/ui/wiz_ui_gather.png');
     this.load.image('claw', 'src/assets/ui/wiz_ui_claw_materials.png');
     this.load.image('claw_spells', 'src/assets/ui/wiz_ui_claw_spells.png');
     
@@ -491,13 +499,13 @@ export class GameScene extends Phaser.Scene {
     const materialAreaX = this.spellWindowX + this.SPELL_WINDOW_PADDING + 8; // 8px padding from spell background edge
     const materialAreaWidth = 24; // Space for materials
     
-    // Cost materials with colorblind-friendly shapes - first two stacked vertically, third on right
+    // Cost materials using small material icons - first two stacked vertically, third on right
     if (spell.materials.length > 0) {
       spell.materials.forEach((materialType, matIndex) => {
-        const materialIcon = this.add.graphics();
-        const color = this.getMaterialColor(materialType);
+        const materialAssetKey = this.getMaterialAssetKey(materialType);
+        const materialIcon = this.add.image(0, 0, materialAssetKey);
         
-        const materialRadius = 8; // Larger materials
+        const iconSize = 16; // Size of small material icons
         const padding = 3; // Reduced padding between materials
         
         let materialX, materialY;
@@ -511,56 +519,21 @@ export class GameScene extends Phaser.Scene {
             materialY = yPos;
           } else {
             // Multiple materials: stack with padding, centered around yPos
-            const totalHeight = (materialRadius * 2 * 2) + padding; // Height of two materials with padding
+            const totalHeight = (iconSize * 2) + padding; // Height of two materials with padding
             const startY = yPos - (totalHeight / 2);
-            materialY = startY + materialRadius + (matIndex * (materialRadius * 2 + padding));
+            materialY = startY + (iconSize / 2) + (matIndex * (iconSize + padding));
           }
         } else {
           // Third material: positioned on the right, centered vertically
-          materialX = materialAreaX + materialAreaWidth + materialRadius + 2; // To the right of the area
+          materialX = materialAreaX + materialAreaWidth + (iconSize / 2) + 2; // To the right of the area
           materialY = yPos; // Centered vertically
         }
         
-        // Draw base circle with material color
-        materialIcon.fillStyle(color);
-        materialIcon.fillCircle(materialX, materialY, materialRadius);
-        
-        // Add colorblind-friendly shape overlay
-        materialIcon.fillStyle(0x000000, 0.8); // Semi-transparent black for contrast
-        
-        switch (materialType) {
-          case MaterialType.FIRE:
-            // Triangle pointing up (flame shape) - scaled for larger materials
-            const size = 5; // Scaled for radius 8
-            materialIcon.fillTriangle(
-              materialX, materialY - size,     // top
-              materialX - size, materialY + size,  // bottom left
-              materialX + size, materialY + size   // bottom right
-            );
-            break;
-            
-          case MaterialType.LEAF:
-            // Diamond/rhombus shape - scaled for larger materials
-            const diamondSize = 4; // Scaled for radius 8
-            materialIcon.fillPoints([
-              { x: materialX, y: materialY - diamondSize },        // top
-              { x: materialX + diamondSize, y: materialY },        // right
-              { x: materialX, y: materialY + diamondSize },        // bottom
-              { x: materialX - diamondSize, y: materialY }         // left
-            ]);
-            break;
-            
-          case MaterialType.ROCK:
-            // Square shape - scaled for larger materials
-            const squareSize = 4; // Scaled for radius 8
-            materialIcon.fillRect(
-              materialX - squareSize, 
-              materialY - squareSize, 
-              squareSize * 2, 
-              squareSize * 2
-            );
-            break;
-        }
+        // Position and scale the material icon
+        materialIcon.setPosition(materialX, materialY);
+        materialIcon.setScale(iconSize / materialIcon.width); // Scale to desired size
+        materialIcon.setOrigin(0.5, 0.5);
+        materialIcon.setDepth(5); // Above scroll UI but behind crane arm
         
         // Darken materials during selection mode if spell is unavailable
         if (isSelectionMode && !available) {
@@ -629,6 +602,19 @@ export class GameScene extends Phaser.Scene {
       case MaterialType.LEAF: return 0x44ff44;
       case MaterialType.ROCK: return 0xffff44;
       default: return 0xffffff;
+    }
+  }
+  
+  private getMaterialAssetKey(materialType: MaterialType): string {
+    switch (materialType) {
+      case MaterialType.FIRE:
+        return 'material_fire_small';
+      case MaterialType.LEAF:
+        return 'material_leaf_small';
+      case MaterialType.ROCK:
+        return 'material_rock_small';
+      default:
+        return 'material_fire_small'; // Fallback
     }
   }
   
@@ -864,6 +850,9 @@ export class GameScene extends Phaser.Scene {
     
     // Update encounter system
     this.encounterManager.update(this.time.now, this.time.delta);
+    
+    // Update encounter result window for spacebar input
+    this.encounterResultWindow.update();
     
     // Update crane movement (only when selecting materials)
     if (this.gameState === 'selecting') {
@@ -1224,6 +1213,7 @@ export class GameScene extends Phaser.Scene {
   }
   
   public showEncounterResult(result: EncounterResult): void {
+    console.log(`GameScene: showEncounterResult called with result: ${result}`);
     this.encounterResultWindow.show(result);
   }
   

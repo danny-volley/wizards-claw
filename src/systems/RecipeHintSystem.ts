@@ -168,28 +168,14 @@ export class RecipeHintSystem {
       if (hint.isDiscovered && hint.materials.length > 0) {
         hint.materials.forEach((material, matIndex) => {
           const iconX = 260 + (matIndex * 12);
-          const icon = this.scene.add.graphics();
-          icon.fillStyle(this.getMaterialColor(material));
-          icon.fillCircle(iconX, yPos + 6, 4);
+          const materialAssetKey = this.getMaterialAssetKey(material);
+          const icon = this.scene.add.image(iconX, yPos + 6, materialAssetKey);
           
-          // Add shape for accessibility
-          icon.fillStyle(0x000000, 0.8);
-          switch (material) {
-            case MaterialType.FIRE:
-              icon.fillTriangle(iconX, yPos + 3, iconX - 2, yPos + 8, iconX + 2, yPos + 8);
-              break;
-            case MaterialType.LEAF:
-              icon.fillPoints([
-                { x: iconX, y: yPos + 3 },
-                { x: iconX + 2, y: yPos + 6 },
-                { x: iconX, y: yPos + 9 },
-                { x: iconX - 2, y: yPos + 6 }
-              ]);
-              break;
-            case MaterialType.ROCK:
-              icon.fillRect(iconX - 2, yPos + 4, 4, 4);
-              break;
-          }
+          // Scale to small size for hint display
+          const iconSize = 8;
+          icon.setScale(iconSize / icon.width);
+          icon.setOrigin(0.5, 0.5);
+          icon.setDepth(5); // Above scroll UI but behind crane arm
           
           this.hintContainer.add(icon);
         });
@@ -240,5 +226,18 @@ export class RecipeHintSystem {
   
   public isShowingHints(): boolean {
     return this.showingHints;
+  }
+  
+  private getMaterialAssetKey(materialType: MaterialType): string {
+    switch (materialType) {
+      case MaterialType.FIRE:
+        return 'material_fire_small';
+      case MaterialType.LEAF:
+        return 'material_leaf_small';
+      case MaterialType.ROCK:
+        return 'material_rock_small';
+      default:
+        return 'material_fire_small'; // Fallback
+    }
   }
 }

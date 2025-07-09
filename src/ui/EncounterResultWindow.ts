@@ -11,10 +11,13 @@ export class EncounterResultWindow {
   private continueButton: Phaser.GameObjects.Container;
   private restartButton: Phaser.GameObjects.Container;
   private isVisible: boolean;
+  private spaceKey: Phaser.Input.Keyboard.Key;
+  private currentResult: EncounterResult;
   
   constructor(scene: GameScene) {
     this.scene = scene;
     this.isVisible = false;
+    this.spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.createWindow();
   }
   
@@ -115,19 +118,21 @@ export class EncounterResultWindow {
   }
   
   public show(result: EncounterResult): void {
+    console.log(`EncounterResultWindow: show called with result: ${result}`);
     this.isVisible = true;
+    this.currentResult = result;
     
     // Update text based on result
     if (result === EncounterResult.VICTORY) {
       this.titleText.setText('VICTORY!');
       this.titleText.setColor('#00ff00');
-      this.messageText.setText('You have defeated the enemy!\nYour health has been fully restored.');
+      this.messageText.setText('You have defeated the enemy!\nYour health has been fully restored.\n\nPress SPACEBAR to continue');
       this.continueButton.setVisible(true);
       this.restartButton.setVisible(false);
     } else if (result === EncounterResult.DEFEAT) {
       this.titleText.setText('DEFEAT');
       this.titleText.setColor('#ff0000');
-      this.messageText.setText('You have been defeated!\nWould you like to try again?');
+      this.messageText.setText('You have been defeated!\nWould you like to try again?\n\nPress SPACEBAR to restart');
       this.continueButton.setVisible(false);
       this.restartButton.setVisible(true);
     }
@@ -147,6 +152,25 @@ export class EncounterResultWindow {
     
     // Pause the game
     this.scene.physics.pause();
+  }
+  
+  public update(): void {
+    // Check for spacebar input when window is visible
+    if (this.isVisible && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+      this.handleSpacebarPress();
+    }
+  }
+  
+  private handleSpacebarPress(): void {
+    if (this.currentResult === EncounterResult.VICTORY) {
+      // Same action as continue button
+      this.hide();
+      this.scene.onEncounterResultClosed();
+    } else if (this.currentResult === EncounterResult.DEFEAT) {
+      // Same action as restart button
+      this.hide();
+      this.scene.restartCurrentEncounter();
+    }
   }
   
   public hide(): void {

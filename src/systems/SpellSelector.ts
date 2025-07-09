@@ -100,24 +100,36 @@ export class SpellSelector extends Phaser.GameObjects.Container {
     spellBg.setAlpha(alpha);
     this.add(spellBg);
     
-    // Spell materials (colored circles)
+    // Spell materials (small material icons)
     if (spell.materials.length > 0) {
       spell.materials.forEach((materialType, matIndex) => {
-        const circle = this.gameScene.add.graphics();
-        const color = this.getMaterialColor(materialType);
-        circle.fillStyle(color);
-        circle.fillCircle(20 + (matIndex * 15), yPos + 15, 6);
-        circle.setAlpha(alpha);
-        this.add(circle);
+        const materialAssetKey = this.getMaterialAssetKey(materialType);
+        const icon = this.gameScene.add.image(20 + (matIndex * 15), yPos + 15, materialAssetKey);
+        
+        // Scale to small size for selector display
+        const iconSize = 12;
+        icon.setScale(iconSize / icon.width);
+        icon.setOrigin(0.5, 0.5);
+        icon.setDepth(5); // Above scroll UI but behind crane arm
+        icon.setAlpha(alpha);
+        this.add(icon);
       });
     } else {
-      // Gather icon (arrow)
-      const gatherIcon = this.gameScene.add.graphics();
-      gatherIcon.lineStyle(2, available ? 0xffffff : 0x666666);
-      gatherIcon.lineBetween(15, yPos + 15, 25, yPos + 10);
-      gatherIcon.lineBetween(15, yPos + 15, 25, yPos + 20);
-      gatherIcon.lineBetween(15, yPos + 15, 30, yPos + 15);
+      // Gather icon (using proper asset)
+      const gatherIcon = this.gameScene.add.image(20, yPos + 15, 'gather_icon');
+      
+      // Scale to appropriate size for selector display
+      const iconSize = 16;
+      gatherIcon.setScale(iconSize / gatherIcon.width);
+      gatherIcon.setOrigin(0.5, 0.5);
+      gatherIcon.setDepth(5); // Above scroll UI but behind crane arm
       gatherIcon.setAlpha(alpha);
+      
+      // Tint based on availability
+      if (!available) {
+        gatherIcon.setTint(0x666666);
+      }
+      
       this.add(gatherIcon);
     }
     
@@ -136,6 +148,19 @@ export class SpellSelector extends Phaser.GameObjects.Container {
       case MaterialType.LEAF: return 0x44ff44;
       case MaterialType.ROCK: return 0xffff44;
       default: return 0xffffff;
+    }
+  }
+  
+  private getMaterialAssetKey(materialType: MaterialType): string {
+    switch (materialType) {
+      case MaterialType.FIRE:
+        return 'material_fire_small';
+      case MaterialType.LEAF:
+        return 'material_leaf_small';
+      case MaterialType.ROCK:
+        return 'material_rock_small';
+      default:
+        return 'material_fire_small'; // Fallback
     }
   }
   
