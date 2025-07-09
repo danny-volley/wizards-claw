@@ -269,9 +269,11 @@ export class GameScene extends Phaser.Scene {
     
     // Create turn indicator text
     this.turnIndicatorText = this.add.text(200, 40, 'Your Turn', {
-      fontSize: '24px',
+      fontSize: '18px',
       color: '#ffff00',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      align: 'center',
+      wordWrap: { width: 280, useAdvancedWrap: true }
     });
     this.turnIndicatorText.setOrigin(0.5, 0.5);
     this.turnIndicatorText.setVisible(false);
@@ -1088,18 +1090,46 @@ export class GameScene extends Phaser.Scene {
   public setPlayerTurn(isPlayerTurn: boolean): void {
     if (this.turnIndicatorText) {
       if (isPlayerTurn) {
-        this.turnIndicatorText.setText('Your Turn');
-        this.turnIndicatorText.setColor('#ffff00');
+        // During player turn, show what the enemy might do next
+        const enemyPrediction = this.getRandomEnemyPrediction();
+        this.turnIndicatorText.setText(enemyPrediction);
+        this.turnIndicatorText.setColor('#ffffff');
         // Show crane during player turn
         this.crane.setVisible(true);
       } else {
-        this.turnIndicatorText.setText('Enemy Turn');
-        this.turnIndicatorText.setColor('#ff8800');
+        // During enemy turn, show what the enemy is actually doing
+        const enemyAction = this.getRandomEnemyAction();
+        this.turnIndicatorText.setText(enemyAction);
+        this.turnIndicatorText.setColor('#ffffff');
         // Hide crane during enemy turn
         this.crane.setVisible(false);
       }
       this.turnIndicatorText.setVisible(true);
     }
+  }
+
+  private getRandomEnemyPrediction(): string {
+    const predictions = [
+      'Opponent might attack next',
+      'Opponent may block next',
+      'Opponent may do a big attack next',
+      'Opponent might cast a spell next',
+      'Opponent may try to heal next',
+      'Opponent might use a special ability next'
+    ];
+    return predictions[Math.floor(Math.random() * predictions.length)];
+  }
+
+  private getRandomEnemyAction(): string {
+    const actions = [
+      'Opponent attacked',
+      'Opponent blocked',
+      'Opponent did a big attack',
+      'Opponent cast a spell',
+      'Opponent healed',
+      'Opponent used a special ability'
+    ];
+    return actions[Math.floor(Math.random() * actions.length)];
   }
   
   public showDamageEffect(damage: number, toEnemy: boolean): void {
