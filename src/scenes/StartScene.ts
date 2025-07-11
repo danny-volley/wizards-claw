@@ -5,6 +5,7 @@ export class StartScene extends Phaser.Scene {
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private splashImage!: Phaser.GameObjects.Image;
   private instructionText!: Phaser.GameObjects.Text;
+  private puzzleDebugButton!: Phaser.GameObjects.Container;
 
   constructor() {
     super({ key: 'StartScene' });
@@ -64,6 +65,9 @@ export class StartScene extends Phaser.Scene {
     // Setup input
     this.setupInput();
 
+    // Add debug button for puzzle testing
+    this.createPuzzleDebugButton();
+
     // Add fade in effect
     this.cameras.main.fadeIn(1000, 0, 0, 0);
 
@@ -87,6 +91,74 @@ export class StartScene extends Phaser.Scene {
       // Use CampfireManager to properly start the opening campfire scene
       const campfireManager = CampfireManager.getInstance();
       campfireManager.startCampfireScene(this, 'opening_campfire');
+    });
+  }
+
+  private createPuzzleDebugButton() {
+    // Create debug button container
+    this.puzzleDebugButton = this.add.container(this.scale.width - 120, 40);
+    
+    // Button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillStyle(0x8B4513, 0.8); // Brown background
+    buttonBg.fillRoundedRect(-50, -15, 100, 30, 5);
+    buttonBg.lineStyle(2, 0xFFD700, 1); // Gold border
+    buttonBg.strokeRoundedRect(-50, -15, 100, 30, 5);
+    
+    // Button text
+    const buttonText = this.add.text(0, 0, 'PUZZLE', {
+      fontSize: '14px',
+      color: '#FFD700',
+      fontStyle: 'bold'
+    });
+    buttonText.setOrigin(0.5);
+    
+    // Add to container
+    this.puzzleDebugButton.add([buttonBg, buttonText]);
+    
+    // Make interactive
+    this.puzzleDebugButton.setSize(100, 30);
+    this.puzzleDebugButton.setInteractive();
+    
+    // Add hover effects
+    this.puzzleDebugButton.on('pointerover', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0xA0522D, 0.9); // Lighter brown on hover
+      buttonBg.fillRoundedRect(-50, -15, 100, 30, 5);
+      buttonBg.lineStyle(2, 0xFFD700, 1);
+      buttonBg.strokeRoundedRect(-50, -15, 100, 30, 5);
+    });
+    
+    this.puzzleDebugButton.on('pointerout', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0x8B4513, 0.8); // Original brown
+      buttonBg.fillRoundedRect(-50, -15, 100, 30, 5);
+      buttonBg.lineStyle(2, 0xFFD700, 1);
+      buttonBg.strokeRoundedRect(-50, -15, 100, 30, 5);
+    });
+    
+    // Add click handler
+    this.puzzleDebugButton.on('pointerdown', () => {
+      this.startPuzzleDebug();
+    });
+    
+    // Set depth to appear above background
+    this.puzzleDebugButton.setDepth(1000);
+    
+    console.log('Puzzle debug button created');
+  }
+  
+  private startPuzzleDebug() {
+    console.log('StartScene: Starting puzzle debug - going directly to GameScene with puzzle');
+    
+    // Fade out and transition to game scene
+    this.cameras.main.fadeOut(800, 0, 0, 0);
+    this.time.delayedCall(800, () => {
+      // Start GameScene with puzzle debug flag
+      this.scene.start('GameScene', { 
+        debugMode: true, 
+        startPuzzle: true 
+      });
     });
   }
 

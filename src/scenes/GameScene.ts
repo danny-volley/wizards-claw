@@ -15,6 +15,7 @@ import { EncounterResultWindow } from '../ui/EncounterResultWindow';
 import { EncounterResult } from '../encounters/BaseEncounter';
 import { EnemyData } from '../data/EnemyData';
 import { CampfireManager } from '../systems/CampfireManager';
+import { PuzzleType } from '../data/PuzzleData';
 
 export class GameScene extends Phaser.Scene {
   private inputSystem!: InputSystem;
@@ -198,6 +199,9 @@ export class GameScene extends Phaser.Scene {
         
         // Fade in from map transition
         this.cameras.main.fadeIn(800, 0, 0, 0);
+      } else if (data && data.debugMode && data.startPuzzle) {
+        console.log('GameScene: Starting debug puzzle encounter');
+        this.startDebugPuzzle();
       } else {
         // Start first encounter automatically (default behavior)
         this.encounterManager.startNextEncounter();
@@ -1607,4 +1611,68 @@ export class GameScene extends Phaser.Scene {
   }
   
   private mapEncounterData: any = null;
+  
+  private startDebugPuzzle(): void {
+    console.log('GameScene: Starting debug puzzle');
+    
+    // Start a random puzzle encounter
+    const puzzleTypes = [PuzzleType.DAMAGE, PuzzleType.BLOCKING];
+    const randomType = puzzleTypes[Math.floor(Math.random() * puzzleTypes.length)];
+    const randomDifficulty = Math.floor(Math.random() * 3) + 1; // 1-3 difficulty
+    
+    console.log(`Starting ${randomType} puzzle with difficulty ${randomDifficulty}`);
+    this.encounterManager.startSinglePuzzleEncounter(randomDifficulty, randomType);
+  }
+  
+  // Puzzle UI components
+  private puzzleTimerText: Phaser.GameObjects.Text | null = null;
+  private puzzleGoalText: Phaser.GameObjects.Text | null = null;
+  
+  // Puzzle UI methods
+  public setPuzzleTimer(timeRemaining: number): void {
+    if (!this.puzzleTimerText) {
+      this.puzzleTimerText = this.add.text(200, 80, '', {
+        fontSize: '20px',
+        color: '#ffff00',
+        fontStyle: 'bold'
+      });
+      this.puzzleTimerText.setOrigin(0.5, 0.5);
+    }
+    
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = Math.floor(timeRemaining % 60);
+    const timeText = minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}s`;
+    
+    this.puzzleTimerText.setText(timeText);
+    
+    // Change color based on remaining time
+    if (timeRemaining <= 10) {
+      this.puzzleTimerText.setColor('#ff0000'); // Red for urgent
+    } else if (timeRemaining <= 30) {
+      this.puzzleTimerText.setColor('#ff8800'); // Orange for warning
+    } else {
+      this.puzzleTimerText.setColor('#ffff00'); // Yellow for normal
+    }
+  }
+  
+  public clearPuzzleTimer(): void {
+    if (this.puzzleTimerText) {
+      this.puzzleTimerText.destroy();
+      this.puzzleTimerText = null;
+    }
+  }
+  
+  public setPuzzleGoal(goalText: string): void {
+    if (this.turnIndicatorText) {
+      this.turnIndicatorText.setText(goalText);
+      this.turnIndicatorText.setColor('#ffffff');
+      this.turnIndicatorText.setVisible(true);
+    }
+  }
+  
+  public clearPuzzleGoal(): void {
+    if (this.turnIndicatorText) {
+      this.turnIndicatorText.setVisible(false);
+    }
+  }
 }

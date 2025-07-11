@@ -1,6 +1,8 @@
 import { GameScene } from '../scenes/GameScene';
 import { BaseEncounter, EncounterState, EncounterResult } from '../encounters/BaseEncounter';
 import { CombatEncounter } from '../encounters/CombatEncounter';
+import { PuzzleEncounter } from '../encounters/PuzzleEncounter';
+import { PuzzleType } from '../data/PuzzleData';
 
 export enum EncounterType {
   COMBAT = 'combat',
@@ -12,6 +14,8 @@ export enum EncounterType {
 export interface EncounterConfig {
   type: EncounterType;
   enemyId?: string; // For combat encounters
+  difficultyLevel?: number; // For puzzle encounters
+  puzzleType?: PuzzleType; // For puzzle encounters
   data?: any; // Additional encounter-specific data
 }
 
@@ -36,7 +40,9 @@ export class EncounterManager {
     // Set up initial encounter queue (for testing)
     this.encounterQueue = [
       { type: EncounterType.COMBAT, enemyId: 'lizard' },
+      { type: EncounterType.PUZZLE, difficultyLevel: 1, puzzleType: PuzzleType.DAMAGE },
       { type: EncounterType.COMBAT, enemyId: 'fox' },
+      { type: EncounterType.PUZZLE, difficultyLevel: 2, puzzleType: PuzzleType.BLOCKING },
       { type: EncounterType.COMBAT, enemyId: 'crane' }
     ];
   }
@@ -87,8 +93,7 @@ export class EncounterManager {
         throw new Error('Trap encounters not yet implemented');
       
       case EncounterType.PUZZLE:
-        // TODO: Implement PuzzleEncounter
-        throw new Error('Puzzle encounters not yet implemented');
+        return new PuzzleEncounter(this.scene, config.difficultyLevel || 1, config.puzzleType);
       
       case EncounterType.PREY_HUNT:
         // TODO: Implement PreyHuntEncounter
@@ -125,6 +130,8 @@ export class EncounterManager {
   
   public handlePlayerSpell(castResult: any): void {
     if (this.currentEncounter && this.currentEncounter instanceof CombatEncounter) {
+      this.currentEncounter.handlePlayerSpell(castResult);
+    } else if (this.currentEncounter && this.currentEncounter instanceof PuzzleEncounter) {
       this.currentEncounter.handlePlayerSpell(castResult);
     }
   }
@@ -191,6 +198,26 @@ export class EncounterManager {
     this.isMapEncounter = true;
     
     console.log(`Starting map encounter with ${enemyId}`);
+    this.currentEncounter.start();
+  }
+  
+  public startSinglePuzzleEncounter(difficultyLevel: number = 1, puzzleType?: PuzzleType): void {
+    console.log(`EncounterManager: Starting single puzzle encounter (difficulty: ${difficultyLevel})`);
+    
+    if (this.currentEncounter) {
+      console.warn('Cannot start new encounter while one is active');
+      return;
+    }
+    
+    // Clear any existing queue for map encounters
+    this.encounterQueue = [];
+    
+    // Create and start the puzzle encounter
+    this.currentEncounter = new PuzzleEncounter(this.scene, difficultyLevel, puzzleType);
+    this.isActive = true;
+    this.isMapEncounter = true;
+    
+    console.log(`Starting map puzzle encounter`);
     this.currentEncounter.start();
   }
   
