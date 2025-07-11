@@ -155,7 +155,7 @@ export class MapManager {
     // Set the starting campfire as current
     const startNode = this.mapNodes.get('start_campfire');
     if (startNode) {
-      startNode.setState(MapNodeState.CURRENT);
+      startNode.setNodeState(MapNodeState.CURRENT);
       this.currentPlayerNode = 'start_campfire';
       
       // Make connected nodes available and draw path lines
@@ -171,7 +171,7 @@ export class MapManager {
     connections.forEach(nodeId => {
       const node = this.mapNodes.get(nodeId);
       if (node && node.getNodeData().state === MapNodeState.LOCKED) {
-        node.setState(MapNodeState.AVAILABLE);
+        node.setNodeState(MapNodeState.AVAILABLE);
       }
     });
     
@@ -666,14 +666,14 @@ export class MapManager {
     if (this.currentPlayerNode) {
       const oldNode = this.mapNodes.get(this.currentPlayerNode);
       if (oldNode && !this.completedNodes.has(this.currentPlayerNode)) {
-        oldNode.setState(MapNodeState.AVAILABLE);
+        oldNode.setNodeState(MapNodeState.AVAILABLE);
       }
     }
     
     this.currentPlayerNode = nodeId;
     const currentNode = this.mapNodes.get(nodeId);
     if (currentNode) {
-      currentNode.setState(MapNodeState.CURRENT);
+      currentNode.setNodeState(MapNodeState.CURRENT);
     }
     
     // Update available nodes and path lines
@@ -692,7 +692,7 @@ export class MapManager {
     this.completedNodes.add(nodeId);
     const node = this.mapNodes.get(nodeId);
     if (node) {
-      node.setState(MapNodeState.COMPLETED);
+      node.setNodeState(MapNodeState.COMPLETED);
     }
   }
   
@@ -719,7 +719,7 @@ export class MapManager {
     if (this.currentPlayerNode) {
       const oldNode = this.mapNodes.get(this.currentPlayerNode);
       if (oldNode && !this.completedNodes.has(this.currentPlayerNode)) {
-        oldNode.setState(MapNodeState.AVAILABLE);
+        oldNode.setNodeState(MapNodeState.AVAILABLE);
       }
     }
     
@@ -727,7 +727,7 @@ export class MapManager {
     this.currentPlayerNode = nodeId;
     const currentNode = this.mapNodes.get(nodeId);
     if (currentNode) {
-      currentNode.setState(MapNodeState.CURRENT);
+      currentNode.setNodeState(MapNodeState.CURRENT);
     }
     
     // Update character position and available nodes

@@ -77,40 +77,40 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     // Load UI assets
-    this.load.image('background', 'src/assets/screens/wiz_screen_background.png');
-    this.load.image('robe', 'src/assets/ui/wiz_ui_robe.png');
-    this.load.image('bag', 'src/assets/ui/wiz_ui_bag.png');
-    this.load.image('pouch', 'src/assets/ui/wiz_ui_pouch.png');
-    this.load.image('slot', 'src/assets/ui/wiz_ui_slot.png');
-    this.load.image('scroll', 'src/assets/ui/wiz_ui_scroll.png');
+    this.load.image('background', 'assets/screens/wiz_screen_background.png');
+    this.load.image('robe', 'assets/ui/wiz_ui_robe.png');
+    this.load.image('bag', 'assets/ui/wiz_ui_bag.png');
+    this.load.image('pouch', 'assets/ui/wiz_ui_pouch.png');
+    this.load.image('slot', 'assets/ui/wiz_ui_slot.png');
+    this.load.image('scroll', 'assets/ui/wiz_ui_scroll.png');
     
     // Load material assets
-    this.load.image('material_fire', 'src/assets/ui/wiz_material_fire.png');
-    this.load.image('material_leaf', 'src/assets/ui/wiz_material_leaf.png');
-    this.load.image('material_rock', 'src/assets/ui/wiz_material_rock.png');
+    this.load.image('material_fire', 'assets/ui/wiz_material_fire.png');
+    this.load.image('material_leaf', 'assets/ui/wiz_material_leaf.png');
+    this.load.image('material_rock', 'assets/ui/wiz_material_rock.png');
     
     // Load small material icons for spell lists
-    this.load.image('material_fire_small', 'src/assets/ui/wiz_material_fire_small.png');
-    this.load.image('material_leaf_small', 'src/assets/ui/wiz_material_leaf_small.png');
-    this.load.image('material_rock_small', 'src/assets/ui/wiz_material_rock_small.png');
+    this.load.image('material_fire_small', 'assets/ui/wiz_material_fire_small.png');
+    this.load.image('material_leaf_small', 'assets/ui/wiz_material_leaf_small.png');
+    this.load.image('material_rock_small', 'assets/ui/wiz_material_rock_small.png');
     
     // Load Gather spell icon
-    this.load.image('gather_icon', 'src/assets/ui/wiz_ui_gather.png');
-    this.load.image('claw', 'src/assets/ui/wiz_ui_claw_materials.png');
-    this.load.image('claw_spells', 'src/assets/ui/wiz_ui_claw_spells.png');
+    this.load.image('gather_icon', 'assets/ui/wiz_ui_gather.png');
+    this.load.image('claw', 'assets/ui/wiz_ui_claw_materials.png');
+    this.load.image('claw_spells', 'assets/ui/wiz_ui_claw_spells.png');
     
     // Load character assets
-    this.load.image('char_burok', 'src/assets/characters/wiz_char_burok.png');
-    this.load.image('char_yuvor', 'src/assets/characters/wiz_char_yuvor.png');
+    this.load.image('char_burok', 'assets/characters/wiz_char_burok.png');
+    this.load.image('char_yuvor', 'assets/characters/wiz_char_yuvor.png');
     
     // Load enemy assets
-    this.load.image('battle_lizard', 'src/assets/enemies/wiz_battle_lizard.png');
-    this.load.image('battle_fox', 'src/assets/enemies/wiz_battle_fox.png');
-    this.load.image('battle_crane', 'src/assets/enemies/wiz_battle_crane.png');
+    this.load.image('battle_lizard', 'assets/enemies/wiz_battle_lizard.png');
+    this.load.image('battle_fox', 'assets/enemies/wiz_battle_fox.png');
+    this.load.image('battle_crane', 'assets/enemies/wiz_battle_crane.png');
     
     // Load health bar assets
-    this.load.image('health_back', 'src/assets/ui/wiz_ui_health_back.png');
-    this.load.image('health_front', 'src/assets/ui/wiz_ui_health_front.png');
+    this.load.image('health_back', 'assets/ui/wiz_ui_health_back.png');
+    this.load.image('health_front', 'assets/ui/wiz_ui_health_front.png');
     
     console.log('GameScene: Loading UI assets');
   }
@@ -900,7 +900,7 @@ export class GameScene extends Phaser.Scene {
     this.inputSystem.update();
     
     // Update encounter system
-    this.encounterManager.update(this.time.now, this.time.delta);
+    this.encounterManager.update(this.time.now, 16); // Use 16ms as default delta
     
     // Update encounter result window for spacebar input
     this.encounterResultWindow.update();

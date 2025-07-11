@@ -12,7 +12,7 @@ export class StartScene extends Phaser.Scene {
 
   preload() {
     // Load the splash screen image
-    this.load.image('splash_screen', 'src/assets/screens/wiz_screen_splash.jpg');
+    this.load.image('splash_screen', 'assets/screens/wiz_screen_splash.jpg');
     
     console.log('StartScene: Assets loaded');
   }

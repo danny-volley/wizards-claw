@@ -55,13 +55,13 @@ export class CampfireScene extends Phaser.Scene {
   
   preload() {
     // Load campfire assets
-    this.load.image('campfire_bg', 'src/assets/screens/wiz_screen_campfire.png'); // Proper campfire background
+    this.load.image('campfire_bg', 'assets/screens/wiz_screen_campfire.png'); // Proper campfire background
     
     // Load character portraits
-    this.load.image('char_yuvor', 'src/assets/characters/wiz_char_yuvor.png');
-    this.load.image('char_burok', 'src/assets/characters/wiz_char_burok.png');
-    this.load.image('char_thurm', 'src/assets/characters/wiz_char_thrum.png');
-    this.load.image('char_sythara', 'src/assets/characters/wiz_char_ sythara.png');
+    this.load.image('char_yuvor', 'assets/characters/wiz_char_yuvor.png');
+    this.load.image('char_burok', 'assets/characters/wiz_char_burok.png');
+    this.load.image('char_thurm', 'assets/characters/wiz_char_thrum.png');
+    this.load.image('char_sythara', 'assets/characters/wiz_char_ sythara.png');
     
     console.log('CampfireScene: Assets loaded');
   }

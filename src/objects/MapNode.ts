@@ -34,7 +34,7 @@ export class MapNode extends Phaser.GameObjects.Container {
     this.nodeData = nodeData;
     
     // Add to scene
-    scene.add.existing(this);
+    scene.add.existing(this as any);
     
     // Set container depth to be above path lines
     this.setDepth(10);
@@ -186,7 +186,7 @@ export class MapNode extends Phaser.GameObjects.Container {
     return this.nodeData;
   }
   
-  public setState(newState: MapNodeState) {
+  public setNodeState(newState: MapNodeState) {
     this.nodeData.state = newState;
     this.updateNodeState();
   }

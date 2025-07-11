@@ -12,21 +12,21 @@ export class MapScene extends Phaser.Scene {
   
   preload() {
     // Load map background
-    this.load.image('map_background', 'src/assets/environment/wiz_map_01.jpg');
+    this.load.image('map_background', 'assets/environment/wiz_map_01.jpg');
     
     // Load map node icons (will be used later)
-    this.load.image('map_campfire', 'src/assets/icons/wiz_map_campfire.png');
-    this.load.image('map_encounter', 'src/assets/icons/wiz_map_encounter.png');
-    this.load.image('map_shop', 'src/assets/icons/wiz_map_shop.png');
-    this.load.image('map_treasure', 'src/assets/icons/wiz_map_treasure.png');
-    this.load.image('map_hazard', 'src/assets/icons/wiz_map_hazard.png');
-    this.load.image('map_boss', 'src/assets/icons/wiz_map_boss.png');
+    this.load.image('map_campfire', 'assets/icons/wiz_map_campfire.png');
+    this.load.image('map_encounter', 'assets/icons/wiz_map_encounter.png');
+    this.load.image('map_shop', 'assets/icons/wiz_map_shop.png');
+    this.load.image('map_treasure', 'assets/icons/wiz_map_treasure.png');
+    this.load.image('map_hazard', 'assets/icons/wiz_map_hazard.png');
+    this.load.image('map_boss', 'assets/icons/wiz_map_boss.png');
     
     // Load character position indicator
-    this.load.image('map_yuvor', 'src/assets/icons/wiz_map_yuvor.png');
+    this.load.image('map_yuvor', 'assets/icons/wiz_map_yuvor.png');
     
     // Load selection arrow
-    this.load.image('map_arrow', 'src/assets/icons/wiz_map_arrow2.png');
+    this.load.image('map_arrow', 'assets/icons/wiz_map_arrow2.png');
     
     console.log('MapScene: Assets loaded');
   }
