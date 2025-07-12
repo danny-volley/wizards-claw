@@ -35,7 +35,7 @@ export const PuzzleHazardDatabase: { [key: string]: PuzzleHazard } = {
     type: PuzzleType.DAMAGE,
     displayName: 'Thorn Bush',
     description: 'A dangerous thorn bush blocking your path',
-    assetKey: 'wiz_enemy_crane', // Placeholder - reuse crane asset for now
+    assetKey: 'hazard_thorns',
     baseDifficulty: 1,
     scaling: {
       targetMultiplier: 1.3,     // 30% more damage needed per level
@@ -52,7 +52,7 @@ export const PuzzleHazardDatabase: { [key: string]: PuzzleHazard } = {
     type: PuzzleType.BLOCKING,
     displayName: 'Falling Rocks',
     description: 'Rocks are falling from above - block the damage!',
-    assetKey: 'wiz_enemy_lizard', // Placeholder - reuse lizard asset for now
+    assetKey: 'hazard_rock',
     baseDifficulty: 1,
     scaling: {
       targetMultiplier: 1.2,     // 20% more blocking needed per level
@@ -69,7 +69,7 @@ export const PuzzleHazardDatabase: { [key: string]: PuzzleHazard } = {
     type: PuzzleType.DAMAGE,
     displayName: 'Fire Trap',
     description: 'A magical fire trap must be extinguished',
-    assetKey: 'wiz_enemy_fox', // Placeholder - reuse fox asset for now
+    assetKey: 'hazard_fire',
     baseDifficulty: 2,
     scaling: {
       targetMultiplier: 1.4,     // 40% more damage needed per level
@@ -86,7 +86,7 @@ export const PuzzleHazardDatabase: { [key: string]: PuzzleHazard } = {
     type: PuzzleType.BLOCKING,
     displayName: 'Ice Barrier',
     description: 'An ice barrier is sending freezing attacks',
-    assetKey: 'wiz_enemy_crane', // Placeholder - reuse crane asset for now
+    assetKey: 'hazard_plant',
     baseDifficulty: 2,
     scaling: {
       targetMultiplier: 1.2,    // 25% more blocking needed per level

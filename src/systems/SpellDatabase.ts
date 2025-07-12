@@ -218,7 +218,7 @@ export class SpellDatabase {
       id: 'gather',
       name: 'Gather',
       description: 'Collect materials from the environment',
-      materials: [],
+      materials: [MaterialType.ANY],
       difficulty: 1,
       discovered: true,
       effect: {
@@ -255,7 +255,7 @@ export class SpellDatabase {
   }
   
   static canCastSpell(required: MaterialType[], available: MaterialType[]): boolean {
-    if (required.length === 0) return true; // Gather spell
+    if (required.length === 0) return true; // Old Gather spell behavior
     if (required.length > available.length) return false;
     
     // Create copies to avoid modifying original arrays
@@ -264,7 +264,13 @@ export class SpellDatabase {
     
     // Check if we have all required materials
     for (const material of requiredCopy) {
-      const index = availableCopy.indexOf(material);
+      let index = availableCopy.indexOf(material);
+      
+      // If exact match not found and requirement is ANY, try to match any available material
+      if (index === -1 && material === MaterialType.ANY) {
+        index = availableCopy.length > 0 ? 0 : -1; // Use first available material
+      }
+      
       if (index === -1) return false;
       availableCopy.splice(index, 1); // Remove used material
     }

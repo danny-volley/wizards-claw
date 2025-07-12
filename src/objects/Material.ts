@@ -1,7 +1,8 @@
 export enum MaterialType {
   FIRE = 'fire',
   LEAF = 'leaf',
-  ROCK = 'rock'
+  ROCK = 'rock',
+  ANY = 'any'
 }
 
 export class Material extends Phaser.Physics.Arcade.Sprite {
@@ -16,7 +17,8 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
   private static readonly COLORS = {
     [MaterialType.FIRE]: 0xff4444,
     [MaterialType.LEAF]: 0x44ff44,
-    [MaterialType.ROCK]: 0xffff44
+    [MaterialType.ROCK]: 0xffff44,
+    [MaterialType.ANY]: 0xcccccc
   };
   
   constructor(scene: Phaser.Scene, x: number, y: number, type: MaterialType) {

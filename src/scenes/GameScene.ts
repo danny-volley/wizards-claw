@@ -94,6 +94,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('material_fire_small', 'assets/ui/wiz_material_fire_small.png');
     this.load.image('material_leaf_small', 'assets/ui/wiz_material_leaf_small.png');
     this.load.image('material_rock_small', 'assets/ui/wiz_material_rock_small.png');
+    this.load.image('material_any_small', 'assets/ui/wiz_material_any_small.png');
     
     // Load Gather spell icon
     this.load.image('gather_icon', 'assets/ui/wiz_ui_gather.png');
@@ -108,6 +109,12 @@ export class GameScene extends Phaser.Scene {
     this.load.image('battle_lizard', 'assets/enemies/wiz_battle_lizard.png');
     this.load.image('battle_fox', 'assets/enemies/wiz_battle_fox.png');
     this.load.image('battle_crane', 'assets/enemies/wiz_battle_crane.png');
+    
+    // Load hazard assets for puzzle encounters
+    this.load.image('hazard_fire', 'assets/enemies/wiz_hazard_fire.png');
+    this.load.image('hazard_plant', 'assets/enemies/wiz_hazard_plant.png');
+    this.load.image('hazard_rock', 'assets/enemies/wiz_hazard_rock.png');
+    this.load.image('hazard_thorns', 'assets/enemies/wiz_hazard_thorns.png');
     
     // Load health bar assets
     this.load.image('health_back', 'assets/ui/wiz_ui_health_back.png');
@@ -657,6 +664,8 @@ export class GameScene extends Phaser.Scene {
         return 'material_leaf_small';
       case MaterialType.ROCK:
         return 'material_rock_small';
+      case MaterialType.ANY:
+        return 'material_any_small';
       default:
         return 'material_fire_small'; // Fallback
     }
@@ -797,8 +806,8 @@ export class GameScene extends Phaser.Scene {
     console.log('Slots filled count:', this.materialSlots.getFilledCount());
     console.log('Is full:', this.materialSlots.isFull());
     
-    // Check if slots are full for spell casting (minimum 2 slots, maximum available slots)
-    const minSlotsForCasting = 2;
+    // Check if slots are full for spell casting (minimum 1 slot, maximum available slots)
+    const minSlotsForCasting = 1;
     const filledCount = this.materialSlots.getFilledCount();
     
     if (added && filledCount >= minSlotsForCasting && this.gameState === 'selecting') {
@@ -870,16 +879,8 @@ export class GameScene extends Phaser.Scene {
       }
     }
     
-    // Destroy the used materials (make them disappear)
-    usedMaterials.forEach(material => {
-      if (material && material.destroy) {
-        try {
-          material.destroy();
-        } catch (error) {
-          console.warn('Error destroying material during spell casting:', error);
-        }
-      }
-    });
+    // Process materials: destroy only what's needed for spell, return extras to bag
+    this.processMaterialsForSpell(usedMaterials, spellRecipe);
     
     // Clear slots and return to material selection
     this.materialSlots.clear();
@@ -1068,6 +1069,9 @@ export class GameScene extends Phaser.Scene {
     this.currentEnemyImage = this.add.image(200, 360, enemyData.assetKey);
     this.currentEnemyImage.setOrigin(0.5, 0.5);
     this.currentEnemyImage.setScale(enemyData.scale);
+    
+    // Set depth to be in front of background layer (-100) but behind main game elements (0+)
+    this.currentEnemyImage.setDepth(-50);
     
     // Update health bar text
     this.enemyHealthText.setText(enemyData.displayName);
@@ -1624,6 +1628,108 @@ export class GameScene extends Phaser.Scene {
     this.encounterManager.startSinglePuzzleEncounter(randomDifficulty, randomType);
   }
   
+  private processMaterialsForSpell(usedMaterials: Material[], spellRecipe: SpellRecipe | undefined): void {
+    if (!spellRecipe) {
+      // No spell recipe found, destroy all materials (fallback behavior)
+      usedMaterials.forEach(material => {
+        if (material && material.destroy) {
+          try {
+            material.destroy();
+          } catch (error) {
+            console.warn('Error destroying material during spell casting:', error);
+          }
+        }
+      });
+      return;
+    }
+    
+    // Get the material types currently in slots
+    const slotMaterialTypes = usedMaterials.map(material => material.materialType);
+    
+    // Create a copy of the recipe requirements to track what we need to consume
+    const requiredMaterials = [...spellRecipe.materials];
+    const materialsToDestroy: Material[] = [];
+    const materialsToReturn: Material[] = [];
+    
+    // Match materials to recipe requirements
+    usedMaterials.forEach(material => {
+      const materialType = material.materialType;
+      
+      // Check for exact match first
+      let requiredIndex = requiredMaterials.indexOf(materialType);
+      
+      // If no exact match, check for ANY material requirement
+      if (requiredIndex === -1) {
+        requiredIndex = requiredMaterials.indexOf(MaterialType.ANY);
+      }
+      
+      if (requiredIndex !== -1) {
+        // This material is needed for the spell
+        requiredMaterials.splice(requiredIndex, 1); // Remove from required list
+        materialsToDestroy.push(material);
+        console.log(`Consuming ${materialType} for spell`);
+      } else {
+        // This material is not needed for the spell
+        materialsToReturn.push(material);
+        console.log(`Returning ${materialType} to bag`);
+      }
+    });
+    
+    // Destroy the materials used for the spell
+    materialsToDestroy.forEach(material => {
+      if (material && material.destroy) {
+        try {
+          material.destroy();
+        } catch (error) {
+          console.warn('Error destroying material during spell casting:', error);
+        }
+      }
+    });
+    
+    // Return unused materials to the bag
+    this.returnMaterialsToBag(materialsToReturn);
+  }
+  
+  private returnMaterialsToBag(materials: Material[]): void {
+    // Destroy the original materials and create new ones in the bag
+    materials.forEach((material, index) => {
+      const materialType = material.materialType;
+      
+      // Destroy the original material
+      if (material && material.destroy) {
+        try {
+          material.destroy();
+        } catch (error) {
+          console.warn('Error destroying material when returning to bag:', error);
+        }
+      }
+      
+      // Create a new material and add it to the bag with staggered timing
+      this.time.delayedCall(index * 100, () => {
+        const newMaterial = new Material(
+          this,
+          0,
+          0,
+          materialType
+        );
+        
+        // Add to materials group for collision handling
+        if (this.getMaterialsGroup) {
+          this.getMaterialsGroup().add(newMaterial);
+        }
+        
+        // Add to bag using the standard method
+        this.materialBag.addMaterial(newMaterial);
+        
+        console.log(`Returned ${materialType} to bag`);
+      });
+    });
+    
+    if (materials.length > 0) {
+      console.log(`Returning ${materials.length} unused materials to bag`);
+    }
+  }
+  
   // Puzzle UI components
   private puzzleTimerText: Phaser.GameObjects.Text | null = null;
   private puzzleGoalText: Phaser.GameObjects.Text | null = null;
@@ -1631,7 +1737,8 @@ export class GameScene extends Phaser.Scene {
   // Puzzle UI methods
   public setPuzzleTimer(timeRemaining: number): void {
     if (!this.puzzleTimerText) {
-      this.puzzleTimerText = this.add.text(200, 80, '', {
+      // Position below enemy health bar (health bar is at Y: 100, so timer at Y: 140)
+      this.puzzleTimerText = this.add.text(200, 140, '', {
         fontSize: '20px',
         color: '#ffff00',
         fontStyle: 'bold'
