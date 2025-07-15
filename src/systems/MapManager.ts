@@ -444,6 +444,13 @@ export class MapManager {
             console.log(`MapManager: Animation complete, starting campfire scene for ${selectedNodeId}`);
             this.startCampfireScene(nodeData);
           });
+        } else if (nodeData.type === MapNodeType.SHOP) {
+          console.log(`MapManager: Arrow selected shop node ${selectedNodeId}`);
+          // Move to the node first, then open shop after animation
+          this.moveToNodeWithAnimation(selectedNodeId, async () => {
+            console.log(`MapManager: Animation complete, opening shop for ${selectedNodeId}`);
+            await this.openShop(nodeData);
+          });
         } else {
           // For other nodes, just move normally
           this.moveToNodeWithAnimation(selectedNodeId);
@@ -627,12 +634,33 @@ export class MapManager {
     }
   }
   
-  private handleShopNode(nodeData: MapNodeData): void {
+  private async handleShopNode(nodeData: MapNodeData): Promise<void> {
     console.log(`Opening shop: ${nodeData.id}`);
     
-    // TODO: Integrate with shop system
-    // For now, just move to the node
-    this.moveToNode(nodeData.id);
+    // Move to the node first, then open shop after animation
+    this.moveToNodeWithAnimation(nodeData.id, async () => {
+      console.log(`MapManager: Animation complete, opening shop for ${nodeData.id}`);
+      await this.openShop(nodeData);
+    });
+  }
+  
+  private async openShop(nodeData: MapNodeData): Promise<void> {
+    // Import shop data using ES6 import
+    const { DEFAULT_SHOP_ITEMS, DEFAULT_PLAYER_INVENTORY } = await import('../data/ShopData');
+    
+    // Create shop scene data
+    const shopSceneData = {
+      fromScene: 'MapScene',
+      shopItems: [...DEFAULT_SHOP_ITEMS], // Create a copy so we can modify it
+      playerSaltCrystals: DEFAULT_PLAYER_INVENTORY.saltCrystals,
+      currentNodeId: nodeData.id
+    };
+    
+    // Fade out and transition to shop
+    this.scene.cameras.main.fadeOut(800, 0, 0, 0);
+    this.scene.time.delayedCall(800, () => {
+      this.scene.scene.start('ShopScene', shopSceneData);
+    });
   }
   
   private handleTreasureNode(nodeData: MapNodeData): void {

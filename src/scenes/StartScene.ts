@@ -6,6 +6,7 @@ export class StartScene extends Phaser.Scene {
   private splashImage!: Phaser.GameObjects.Image;
   private instructionText!: Phaser.GameObjects.Text;
   private puzzleDebugButton!: Phaser.GameObjects.Container;
+  private shopDebugButton!: Phaser.GameObjects.Container;
 
   constructor() {
     super({ key: 'StartScene' });
@@ -65,8 +66,9 @@ export class StartScene extends Phaser.Scene {
     // Setup input
     this.setupInput();
 
-    // Add debug button for puzzle testing
+    // Add debug buttons for testing
     this.createPuzzleDebugButton();
+    this.createShopDebugButton();
 
     // Add fade in effect
     this.cameras.main.fadeIn(1000, 0, 0, 0);
@@ -159,6 +161,80 @@ export class StartScene extends Phaser.Scene {
         debugMode: true, 
         startPuzzle: true 
       });
+    });
+  }
+
+  private createShopDebugButton() {
+    // Create debug button container - position to the left of puzzle button
+    this.shopDebugButton = this.add.container(this.scale.width - 250, 40);
+    
+    // Button background
+    const buttonBg = this.add.graphics();
+    buttonBg.fillStyle(0x4B0082, 0.8); // Purple background
+    buttonBg.fillRoundedRect(-50, -15, 100, 30, 5);
+    buttonBg.lineStyle(2, 0xFFD700, 1); // Gold border
+    buttonBg.strokeRoundedRect(-50, -15, 100, 30, 5);
+    
+    // Button text
+    const buttonText = this.add.text(0, 0, 'SHOP', {
+      fontSize: '14px',
+      color: '#FFD700',
+      fontStyle: 'bold'
+    });
+    buttonText.setOrigin(0.5);
+    
+    // Add to container
+    this.shopDebugButton.add([buttonBg, buttonText]);
+    
+    // Make interactive
+    this.shopDebugButton.setSize(100, 30);
+    this.shopDebugButton.setInteractive();
+    
+    // Add hover effects
+    this.shopDebugButton.on('pointerover', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0x6A0DAD, 0.9); // Lighter purple on hover
+      buttonBg.fillRoundedRect(-50, -15, 100, 30, 5);
+      buttonBg.lineStyle(2, 0xFFD700, 1);
+      buttonBg.strokeRoundedRect(-50, -15, 100, 30, 5);
+    });
+    
+    this.shopDebugButton.on('pointerout', () => {
+      buttonBg.clear();
+      buttonBg.fillStyle(0x4B0082, 0.8); // Original purple
+      buttonBg.fillRoundedRect(-50, -15, 100, 30, 5);
+      buttonBg.lineStyle(2, 0xFFD700, 1);
+      buttonBg.strokeRoundedRect(-50, -15, 100, 30, 5);
+    });
+    
+    // Add click handler
+    this.shopDebugButton.on('pointerdown', () => {
+      this.startShopDebug();
+    });
+    
+    // Set depth to appear above background
+    this.shopDebugButton.setDepth(1000);
+    
+    console.log('Shop debug button created');
+  }
+
+  private async startShopDebug() {
+    console.log('StartScene: Starting shop debug - going directly to ShopScene');
+    
+    // Import shop data using ES6 import
+    const { DEFAULT_SHOP_ITEMS, DEFAULT_PLAYER_INVENTORY } = await import('../data/ShopData');
+    
+    // Create shop scene data
+    const shopSceneData = {
+      fromScene: 'StartScene',
+      shopItems: [...DEFAULT_SHOP_ITEMS], // Create a copy so we can modify it
+      playerSaltCrystals: DEFAULT_PLAYER_INVENTORY.saltCrystals
+    };
+    
+    // Fade out and transition to shop scene
+    this.cameras.main.fadeOut(800, 0, 0, 0);
+    this.time.delayedCall(800, () => {
+      this.scene.start('ShopScene', shopSceneData);
     });
   }
 

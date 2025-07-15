@@ -122,6 +122,7 @@ export class EncounterManager {
     // Handle full healing after encounter
     if (result === EncounterResult.VICTORY) {
       this.scene.fullHealPlayer();
+      this.awardSaltCrystals();
     }
     
     // Don't clear currentEncounter and isActive yet - wait for player to close result window
@@ -261,5 +262,24 @@ export class EncounterManager {
   
   public getRemainingEncounters(): number {
     return this.encounterQueue.length;
+  }
+  
+  private awardSaltCrystals(): void {
+    // Award Salt Crystals based on enemy difficulty
+    let saltCrystalsEarned = 10; // Base amount
+    
+    // Increase based on encounter difficulty if available
+    if (this.currentEncounter && 'getDifficulty' in this.currentEncounter) {
+      const difficulty = (this.currentEncounter as any).getDifficulty();
+      saltCrystalsEarned = Math.max(5, Math.floor(difficulty * 10));
+    }
+    
+    // Import player inventory system using ES6 import
+    import('../data/ShopData').then(({ DEFAULT_PLAYER_INVENTORY }) => {
+      // Award salt crystals (for now, just log - later will integrate with save system)
+      DEFAULT_PLAYER_INVENTORY.saltCrystals += saltCrystalsEarned;
+      
+      console.log(`Awarded ${saltCrystalsEarned} Salt Crystals! Total: ${DEFAULT_PLAYER_INVENTORY.saltCrystals}`);
+    });
   }
 }

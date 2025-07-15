@@ -3,6 +3,7 @@ import { StartScene } from './scenes/StartScene';
 import { GameScene } from './scenes/GameScene';
 import { CampfireScene } from './scenes/CampfireScene';
 import { MapScene } from './scenes/MapScene';
+import { ShopScene } from './scenes/ShopScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -23,7 +24,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false // Disable physics debug visualization
     }
   },
-  scene: [StartScene, GameScene, CampfireScene, MapScene]
+  scene: [StartScene, GameScene, CampfireScene, MapScene, ShopScene]
 };
 
 const game = new Phaser.Game(config);

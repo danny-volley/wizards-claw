@@ -56,6 +56,14 @@ export class MapScene extends Phaser.Scene {
       
       // Fade in from GameScene transition
       this.cameras.main.fadeIn(800, 0, 0, 0);
+    } else if (data && data.currentNodeId) {
+      console.log('MapScene: Returning to node from shop:', data.currentNodeId);
+      
+      // Set the player position to the shop node they were at
+      this.mapManager.setCurrentPlayerNode(data.currentNodeId);
+      
+      // Fade in from ShopScene transition
+      this.cameras.main.fadeIn(800, 0, 0, 0);
     }
     
     // Add instruction text
