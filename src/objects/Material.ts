@@ -59,6 +59,10 @@ export class Material extends Phaser.Physics.Arcade.Sprite {
     visualImage.setDisplaySize(Material.ART_SIZE + 18, Material.ART_SIZE + 18); // Bigger visual (15 * 1.2 = 18)
     visualImage.setOrigin(0.5, 0.5);
     
+    // Set consistent depth for all materials (between background and UI elements)
+    this.setDepth(10);
+    visualImage.setDepth(10);
+    
     // Store reference to update position
     (this as any).visualImage = visualImage;
     

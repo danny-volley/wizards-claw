@@ -82,10 +82,10 @@ export const PuzzleHazardDatabase: { [key: string]: PuzzleHazard } = {
   },
   
   ice_barrier: {
-    id: 'ice_barrier',
+    id: 'poison_plant',
     type: PuzzleType.BLOCKING,
-    displayName: 'Ice Barrier',
-    description: 'An ice barrier is sending freezing attacks',
+    displayName: 'Poison Plant',
+    description: 'A poisonous plant is blocking your path',
     assetKey: 'hazard_plant',
     baseDifficulty: 2,
     scaling: {

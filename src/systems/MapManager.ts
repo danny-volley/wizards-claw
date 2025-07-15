@@ -130,12 +130,10 @@ export class MapManager {
       // Third encounter (main path)
       {
         id: 'encounter_3',
-        type: MapNodeType.ENCOUNTER,
+        type: MapNodeType.HAZARD,
         x: 990,
         y: 470,
-        customName: 'Guard Post',
-        customDifficulty: ENCOUNTER_VARIANTS.HARD.difficultyModifier,
-        customReward: ENCOUNTER_VARIANTS.HARD.rewardAmount,
+        customName: 'Dark Crossing',
         connectedNodes: ['end_campfire']
       },
       
@@ -143,8 +141,8 @@ export class MapManager {
       {
         id: 'end_campfire',
         type: MapNodeType.CAMPFIRE,
-        x: 1100,
-        y: 360,
+        x: 1200,
+        y: 270,
         customName: 'Rest Stop',
         connectedNodes: []
       }
